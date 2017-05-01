@@ -1,3 +1,5 @@
+'use strict';
+
 const bluebird = require('bluebird');
 const crypto = bluebird.promisifyAll(require('crypto'));
 const nodemailer = require('nodemailer');
@@ -287,7 +289,7 @@ exports.postReset = (req, res, next) => {
     };
     return transporter.sendMail(mailOptions)
       .then(() => {
-        req.flash('success', { msg: 'Success! Your password has been changed.' });    
+        req.flash('success', { msg: 'Success! Your password has been changed.' });
       });
   };
 
