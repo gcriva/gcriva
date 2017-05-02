@@ -1,43 +1,56 @@
+'use strict';
+
 const bcrypt = require('bcrypt-nodejs');
 const crypto = require('crypto');
-const mongoose = require('mongoose');
+const gstore = require('gstore-node');
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, unique: true },
-  password: String,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
+const userSchema = new gstore.Schema({
+  email: { type: 'string', isEmail: 'isEmail', required: true },
+  password: { type: 'string', excludeFromIndexes: true },
+  passwordResetToken: 'string',
+  passwordResetExpires: 'datetime',
+  name: { type: 'string', required: true },
+  picture: 'string',
+  gender: 'string',
+  roles: { type: 'array', required: true },
 
-  facebook: String,
-  twitter: String,
-  google: String,
-  github: String,
-  instagram: String,
-  linkedin: String,
-  steam: String,
-  tokens: Array,
+  google: 'string',
+  tokens: { type: 'array' },
 
-  profile: {
-    name: String,
-    gender: String,
-    location: String,
-    website: String,
-    picture: String
-  }
-}, { timestamps: true });
+  createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
+  updatedAt: { type: 'datetime' }
+});
 
 /**
  * Password hash middleware.
  */
-userSchema.pre('save', function save(next) {
+userSchema.pre('save', function preSave() {
   const user = this;
-  if (!user.isModified('password')) { return next(); }
-  bcrypt.genSalt(10, (err, salt) => {
-    if (err) { return next(err); }
-    bcrypt.hash(user.password, salt, null, (err, hash) => {
-      if (err) { return next(err); }
-      user.password = hash;
-      next();
+
+  if (user.email) {
+    user.email = user.email.toLowerCase();
+  }
+
+  user.updatedAt = new Date();
+
+  if (!user.password) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    bcrypt.genSalt(10, (err, salt) => {
+      if (err) {
+        return reject(err);
+      }
+
+      bcrypt.hash(user.password, salt, null, (err, hash) => {
+        if (err) {
+          return reject(err);
+        }
+
+        user.password = hash;
+        resolve();
+      });
     });
   });
 });
@@ -65,6 +78,6 @@ userSchema.methods.gravatar = function gravatar(size) {
   return `https://gravatar.com/avatar/${md5}?s=${size}&d=retro`;
 };
 
-const User = mongoose.model('User', userSchema);
+const User = gstore.model('User', userSchema);
 
 module.exports = User;
