@@ -3,8 +3,12 @@
 const bluebird = require('bluebird');
 const crypto = bluebird.promisifyAll(require('crypto'));
 const nodemailer = require('nodemailer');
-const passport = require('passport');
+const jwt = require('jsonwebtoken');
+const { pick } = require('ramda');
 const User = require('../models/User');
+const locals = require('../config/locals');
+
+// TODO: fix functions that use req.flash
 
 /**
  * GET /login
@@ -23,7 +27,7 @@ exports.getLogin = (req, res) => {
  * POST /login
  * Sign in using email and password.
  */
-exports.postLogin = (req, res, next) => {
+exports.postLogin = (req, res) => {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password cannot be blank').notEmpty();
   req.sanitize('email').normalizeEmail({ remove_dots: false });
@@ -31,22 +35,28 @@ exports.postLogin = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/login');
+    return res.status(422).json({ success: false, message: errors[0] });
   }
 
-  passport.authenticate('local', (err, user, info) => {
-    if (err) { return next(err); }
-    if (!user) {
-      req.flash('errors', info);
-      return res.redirect('/login');
-    }
-    req.logIn(user, (err) => {
-      if (err) { return next(err); }
-      req.flash('success', { msg: 'Success! You are logged in.' });
-      res.redirect(req.session.returnTo || '/');
-    });
-  })(req, res, next);
+  User.findOne({ email: req.body.email })
+    .then(user => {
+      user.comparePassword(req.body.password, (err, isMatch) => {
+        if (isMatch && !err) {
+          const userJwtData = pick(
+            ['id', 'name', 'email', 'roles', 'picture'],
+            user.plain()
+          );
+          const token = jwt.sign(userJwtData, locals.appSecret, {
+            expiresIn: '7d'
+          });
+
+          res.json({ success: true, token });
+        } else {
+          res.json({ success: false, message: 'Falha na autenticação. Verifique se a senha foi digitada corretamente.' });
+        }
+      });
+    })
+    .catch(() => res.status(404).json({ success: false, message: 'Usuário não encontrado' }));
 };
 
 /**
@@ -84,22 +94,18 @@ exports.postSignup = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/signup');
+    return res.status(422).json({ success: false, messages: errors });
   }
 
-  const user = new User({
-    email: req.body.email,
-    password: req.body.password,
-    name: req.body.name
-  });
+  const user = new User(pick(
+    ['email', 'password', 'name', 'roles'],
+    req.body
+  ));
 
   User.findOne({ email: req.body.email })
-    .then((err, existingUser) => {
-      if (err) { return next(err); }
+    .then(existingUser => {
       if (existingUser) {
-        req.flash('errors', { msg: 'Account with that email address already exists.' });
-        return res.redirect('/signup');
+        return res.status(422).json({ success: false, message: 'Já existe um usuário com este email.' });
       }
 
       return user.save()
@@ -109,7 +115,7 @@ exports.postSignup = (req, res, next) => {
               return next(err);
             }
 
-            res.redirect('/');
+            res.json({ success: true, message: 'Usuário criado com sucesso!' });
           });
         });
     })
@@ -137,15 +143,14 @@ exports.postUpdateProfile = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/account');
+    return res.status(422).json({ success: false, messages: errors });
   }
 
-  User.findById(req.user.id, (err, user) => {
+  User.get(req.user.id, (err, user) => {
     if (err) { return next(err); }
     user.email = req.body.email || '';
-    user.profile.name = req.body.name || '';
-    user.profile.gender = req.body.gender || '';
+    user.name = req.body.name || '';
+    user.gender = req.body.gender || '';
     user.profile.location = req.body.location || '';
     user.profile.website = req.body.website || '';
     user.save((err) => {

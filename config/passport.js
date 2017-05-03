@@ -1,10 +1,16 @@
 'use strict';
 
+const { omit } = require('ramda');
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
+const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-
 const User = require('../models/User');
+const locals = require('./locals');
+
+const jwtOptions = {
+  jwtFromRequest: ExtractJwt.fromAuthHeader(),
+  secretOrKey: locals.appSecret
+};
 
 passport.serializeUser((user, done) => {
   done(null, user.plain().id);
@@ -17,23 +23,13 @@ passport.deserializeUser((id, done) => {
 });
 
 /**
- * Sign in using Email and Password.
+ * Sign In using JWT strategy
  */
-passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, done) => {
-  User.findOne({ email: email.toLowerCase() })
-    .then(user => {
-      if (!user) {
-        return done(null, false, { msg: `Email ${email} not found.` });
-      }
-      user.comparePassword(password, (err, isMatch) => {
-        if (err) { return done(err); }
-        if (isMatch) {
-          return done(null, user);
-        }
-        return done(null, false, { msg: 'Invalid email or password.' });
-      });
-    })
-    .catch(err => done(err));
+passport.use(new JwtStrategy(jwtOptions, (jwtPayload, done) => {
+  // If it's a valid and not expired jwt (handled by passport-jwt), the user is authenticated
+  // therefore we just return the user data without iat and exp
+  const user = omit(['iat', 'exp'], jwtPayload);
+  done(null, user);
 }));
 
 /**
@@ -51,6 +47,7 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
  *       - Else create a new account.
  */
 
+// TODO: make Google strategy work and remove flash
 /**
  * Sign in with Google.
  */
@@ -113,10 +110,13 @@ passport.use(new GoogleStrategy({
  * Login Required middleware.
  */
 exports.isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/login');
+  passport.authenticate('jwt', { session: false }, (err, user) => {
+    if (!user) {
+      res.status(401).json({ message: 'Por favor, realize o login antes de continuar.' });
+    } else {
+      next();
+    }
+  })(req, res, next);
 };
 
 /**
