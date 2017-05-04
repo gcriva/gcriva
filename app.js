@@ -32,7 +32,7 @@ const contactController = require('./controllers/contact');
 /**
  * API keys and Passport configuration.
  */
-const passportConfig = require('./config/passport');
+const authentication = require('./config/authentication');
 
 /**
  * Create Express server.
@@ -70,6 +70,8 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
 app.use(express.static(path.join(__dirname, 'public/dist'), { maxAge: 31557600000 }));
 
+app.use(authentication.authenticateEndpoint);
+
 /**
  * Primary app routes.
  */
@@ -85,11 +87,11 @@ app.get('/signup', userController.getSignup);
 app.post('/signup', userController.postSignup);
 app.get('/contact', contactController.getContact);
 app.post('/contact', contactController.postContact);
-app.get('/account', passportConfig.isAuthenticated, userController.getAccount);
-app.post('/account/profile', passportConfig.isAuthenticated, userController.postUpdateProfile);
-app.post('/account/password', passportConfig.isAuthenticated, userController.postUpdatePassword);
-app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
-app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
+app.get('/account', authentication.authorizeEndpoint('admin'), userController.getAccount);
+app.post('/account/profile', userController.postUpdateProfile);
+app.post('/account/password', userController.postUpdatePassword);
+app.post('/account/delete', userController.postDeleteAccount);
+app.get('/account/unlink/:provider', userController.getOauthUnlink);
 
 /**
  * API examples routes.
