@@ -1,6 +1,6 @@
 'use strict';
 
-const { omit } = require('ramda');
+const { omit, curry, is, any, contains, __ } = require('ramda');
 const passport = require('passport');
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
@@ -106,18 +106,36 @@ passport.use(new GoogleStrategy({
   }
 }));
 
-/**
- * Login Required middleware.
- */
-exports.isAuthenticated = (req, res, next) => {
+const unauthenticatedRoutes = ['/', '/login', '/forgot', '/signup'];
+
+exports.authenticate = (req, res, next) => {
+  if (contains(req.path, unauthenticatedRoutes) || req.path.startsWith('/reset')) {
+    return next();
+  }
+
   passport.authenticate('jwt', { session: false }, (err, user) => {
     if (!user) {
       res.status(401).json({ message: 'Por favor, realize o login antes de continuar.' });
     } else {
+      req.user = user;
       next();
     }
   })(req, res, next);
 };
+
+function authorizeEndpoint(roles, req, res, next) {
+  const desiredRoles = is(Array, roles) ? roles : [roles];
+  const { user } = req;
+
+  if (user.roles && any(contains(__, user.roles), desiredRoles)) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Usuário não possui permissão para acessar a funcionalidade.' });
+  }
+}
+
+exports.authorize = curry(authorizeEndpoint);
+exports.authorizeAdmin = exports.authorize('admin');
 
 /**
  * Authorization Required middleware.

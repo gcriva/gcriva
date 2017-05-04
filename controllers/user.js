@@ -11,19 +11,6 @@ const locals = require('../config/locals');
 // TODO: fix functions that use req.flash
 
 /**
- * GET /login
- * Login page.
- */
-exports.getLogin = (req, res) => {
-  if (req.user) {
-    return res.redirect('/');
-  }
-  res.render('account/login', {
-    title: 'Login'
-  });
-};
-
-/**
  * POST /login
  * Sign in using email and password.
  */
@@ -52,33 +39,14 @@ exports.postLogin = (req, res) => {
 
           res.json({ success: true, token });
         } else {
-          res.json({ success: false, message: 'Falha na autenticação. Verifique se a senha foi digitada corretamente.' });
+          res.error(422, {
+            success: false,
+            message: 'Falha na autenticação. Verifique se a senha foi digitada corretamente.'
+          });
         }
       });
     })
     .catch(() => res.status(404).json({ success: false, message: 'Usuário não encontrado' }));
-};
-
-/**
- * GET /logout
- * Log out.
- */
-exports.logout = (req, res) => {
-  req.logout();
-  res.redirect('/');
-};
-
-/**
- * GET /signup
- * Signup page.
- */
-exports.getSignup = (req, res) => {
-  if (req.user) {
-    return res.redirect('/');
-  }
-  res.render('account/signup', {
-    title: 'Create Account'
-  });
 };
 
 /**
@@ -123,16 +91,6 @@ exports.postSignup = (req, res, next) => {
 };
 
 /**
- * GET /account
- * Profile page.
- */
-exports.getAccount = (req, res) => {
-  res.render('account/profile', {
-    title: 'Account Management'
-  });
-};
-
-/**
  * POST /account/profile
  * Update profile information.
  */
@@ -172,25 +130,29 @@ exports.postUpdateProfile = (req, res, next) => {
  * Update current password.
  */
 exports.postUpdatePassword = (req, res, next) => {
+  req.assert('currentPassword', 'currentPassword is required').notEmpty();
   req.assert('password', 'Password must be at least 4 characters long').len(4);
   req.assert('confirmPassword', 'Passwords do not match').equals(req.body.password);
 
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/account');
+    return res.status(422).json({ success: false, messages: errors });
   }
 
-  User.findById(req.user.id, (err, user) => {
-    if (err) { return next(err); }
-    user.password = req.body.password;
-    user.save((err) => {
-      if (err) { return next(err); }
-      req.flash('success', { msg: 'Password has been changed.' });
-      res.redirect('/account');
-    });
-  });
+  User.get(req.user.id)
+    .then(user => {
+      user.comparePassword(req.body.currentPassword, (err, isMatch) => {
+        if (isMatch && !err) {
+          user.save()
+            .then(() => res.json({ message: 'Senha alterada com sucesso' }))
+            .catch(next);
+        } else {
+          res.error(422, 'Falha na autenticação. Verifique se a senha atual foi digitada corretamente.');
+        }
+      });
+    })
+    .catch(res.error(404));
 };
 
 /**
@@ -198,53 +160,13 @@ exports.postUpdatePassword = (req, res, next) => {
  * Delete user account.
  */
 exports.postDeleteAccount = (req, res, next) => {
-  User.remove({ _id: req.user.id }, (err) => {
-    if (err) { return next(err); }
-    req.logout();
-    req.flash('info', { msg: 'Your account has been deleted.' });
-    res.redirect('/');
-  });
-};
-
-/**
- * GET /account/unlink/:provider
- * Unlink OAuth provider.
- */
-exports.getOauthUnlink = (req, res, next) => {
-  const provider = req.params.provider;
-  User.findById(req.user.id, (err, user) => {
-    if (err) { return next(err); }
-    user[provider] = undefined;
-    user.tokens = user.tokens.filter(token => token.kind !== provider);
-    user.save((err) => {
-      if (err) { return next(err); }
-      req.flash('info', { msg: `${provider} account has been unlinked.` });
-      res.redirect('/account');
-    });
-  });
-};
-
-/**
- * GET /reset/:token
- * Reset Password page.
- */
-exports.getReset = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  User
-    .findOne({ passwordResetToken: req.params.token })
-    .where('passwordResetExpires').gt(Date.now())
-    .exec((err, user) => {
-      if (err) { return next(err); }
-      if (!user) {
-        req.flash('errors', { msg: 'Password reset token is invalid or has expired.' });
-        return res.redirect('/forgot');
+  User.delete(req.body.id)
+    .then(response => {
+      if (!response.success) {
+        res.error(404, 'Usuário não foi encontrado.');
       }
-      res.render('account/reset', {
-        title: 'Password Reset'
-      });
-    });
+    })
+    .catch(next);
 };
 
 /**
@@ -253,37 +175,30 @@ exports.getReset = (req, res, next) => {
  */
 exports.postReset = (req, res, next) => {
   req.assert('password', 'Password must be at least 4 characters long.').len(4);
-  req.assert('confirm', 'Passwords must match.').equals(req.body.password);
+  req.assert('confirmPassword', 'Passwords must match.').equals(req.body.password);
 
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('back');
+    return res.status(422).json({ success: false, messages: errors });
   }
 
   const resetPassword = () =>
     User
       .findOne({ passwordResetToken: req.params.token })
-      .where('passwordResetExpires').gt(Date.now())
       .then((user) => {
-        if (!user) {
-          req.flash('errors', { msg: 'Password reset token is invalid or has expired.' });
-          return res.redirect('back');
+        if (user.passwordResetExpires < Date.now()) {
+          res.error(422, 'O token de redefinição de senha expirou.');
+
+          throw new Error(`O token de redefinição de senha expirou. email: ${user.email}`);
         }
         user.password = req.body.password;
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
-        return user.save().then(() => new Promise((resolve, reject) => {
-          req.logIn(user, (err) => {
-            if (err) { return reject(err); }
-            resolve(user);
-          });
-        }));
+        return user.save();
       });
 
   const sendResetPasswordEmail = (user) => {
-    if (!user) { return; }
     const transporter = nodemailer.createTransport({
       service: 'SendGrid',
       auth: {
@@ -293,33 +208,22 @@ exports.postReset = (req, res, next) => {
     });
     const mailOptions = {
       to: user.email,
-      from: 'hackathon@starter.com',
-      subject: 'Your Hackathon Starter password has been changed',
-      text: `Hello,\n\nThis is a confirmation that the password for your account ${user.email} has just been changed.\n`
+      from: 'Sistema Gcriva <no-reply@gcriva.com>',
+      subject: 'A sua senha no Sistema Gcriva foi alterada',
+      text: `Olá ${user.name},\n\nEssa é uma confirmação de que a senha da sua conta ${user.email} foi alterada com sucesso.\n\nObrigado!`
     };
-    return transporter.sendMail(mailOptions)
-      .then(() => {
-        req.flash('success', { msg: 'Success! Your password has been changed.' });
-      });
+    return transporter.sendMail(mailOptions);
   };
 
   resetPassword()
     .then(sendResetPasswordEmail)
-    .then(() => { if (!res.finished) res.redirect('/'); })
-    .catch(err => next(err));
-};
-
-/**
- * GET /forgot
- * Forgot Password page.
- */
-exports.getForgot = (req, res) => {
-  if (req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  res.render('account/forgot', {
-    title: 'Forgot Password'
-  });
+    .then(() => {
+      res.json({
+        success: true,
+        message: 'Senha alterada com sucesso!'
+      });
+    })
+    .catch(next);
 };
 
 /**
@@ -333,8 +237,7 @@ exports.postForgot = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/forgot');
+    return res.error(422, { success: false, message: errors[0] });
   }
 
   const createRandomToken = crypto
@@ -344,16 +247,14 @@ exports.postForgot = (req, res, next) => {
   const setRandomToken = token =>
     User
       .findOne({ email: req.body.email })
-      .then((user) => {
-        if (!user) {
-          req.flash('errors', { msg: 'Account with that email address does not exist.' });
-        } else {
-          user.passwordResetToken = token;
-          user.passwordResetExpires = Date.now() + 3600000; // 1 hour
-          user = user.save();
-        }
-        return user;
-      });
+      .catch(res.error(404))
+      .then(user => {
+        user.passwordResetToken = token;
+        user.passwordResetExpires = Date.now() + 3600000; // 1 hour
+
+        return user.save();
+      })
+      .catch(next);
 
   const sendForgotPasswordEmail = (user) => {
     if (!user) { return; }
@@ -367,22 +268,26 @@ exports.postForgot = (req, res, next) => {
     });
     const mailOptions = {
       to: user.email,
-      from: 'hackathon@starter.com',
-      subject: 'Reset your password on Hackathon Starter',
-      text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
-        Please click on the following link, or paste this into your browser to complete the process:\n\n
+      from: 'Sistema Gcriva <no-reply@gcriva.com>',
+      subject: 'Redefinir sua senha no Gcriva',
+      text: `Você está recebendo este email porquê você requisitou no sistema que sua senha fosse redefinida.\n\n
+        Por favor clique nolink abaixo, ou o copie no seu navegador para completar o processo:\n\n
         http://${req.headers.host}/reset/${token}\n\n
-        If you did not request this, please ignore this email and your password will remain unchanged.\n`
+        Se você não requisitou a redefinição de senha, favor ignorar este email e sua senha continuará a mesma.\n\n
+        Atenciosamente,\n\n
+        Sistema Gcriva`
     };
-    return transporter.sendMail(mailOptions)
-      .then(() => {
-        req.flash('info', { msg: `An e-mail has been sent to ${user.email} with further instructions.` });
-      });
+    return transporter.sendMail(mailOptions);
   };
 
   createRandomToken
     .then(setRandomToken)
     .then(sendForgotPasswordEmail)
-    .then(() => res.redirect('/forgot'))
+    .then(() => {
+      res.json({
+        success: true,
+        message: `Um email foi enviado a ${user.email} com as instruções de redefinição.`
+      });
+    })
     .catch(next);
 };
