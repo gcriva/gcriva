@@ -106,8 +106,10 @@ passport.use(new GoogleStrategy({
   }
 }));
 
-exports.authenticateEndpoint = (req, res, next) => {
-  if (req.path === '/login') {
+const unauthenticatedRoutes = ['/login', '/forgot', '/signup'];
+
+exports.authenticate = (req, res, next) => {
+  if (contains(req.path, unauthenticatedRoutes) || req.path.startsWith('/reset')) {
     return next();
   }
 
@@ -132,7 +134,8 @@ function authorizeEndpoint(roles, req, res, next) {
   }
 }
 
-exports.authorizeEndpoint = curry(authorizeEndpoint);
+exports.authorize = curry(authorizeEndpoint);
+exports.authorizeAdmin = exports.authorize('admin');
 
 /**
  * Authorization Required middleware.
