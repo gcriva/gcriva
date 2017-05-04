@@ -48,6 +48,7 @@
     "pug": "^2.0.0-beta6",
     "ramda": "^0.23.0",
     "request": "^2.78.0",
+    "rollbar": "^0.6.6",
     "validator": "^7.0.0"
   },
   "devDependencies": {

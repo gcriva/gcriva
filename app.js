@@ -2,6 +2,10 @@
 
 // Load environment variables from .env file, where API keys and passwords are configured.
 require('dotenv').config();
+
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
+const rollbar = require('rollbar');
 const express = require('express');
 const compression = require('compression');
 const bodyParser = require('body-parser');
@@ -56,7 +60,7 @@ app.use(sass({
   src: path.join(__dirname, 'public'),
   dest: path.join(__dirname, 'public')
 }));
-app.use(logger('dev'));
+app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(expressValidator());
@@ -111,8 +115,10 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 /**
  * Error Handler.
  */
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV === 'development') {
   app.use(errorHandler());
+} else {
+  app.use(rollbar.errorHandler(process.env.ROLLBAR_TOKEN));
 }
 
 /**
