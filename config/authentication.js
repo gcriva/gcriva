@@ -106,7 +106,7 @@ passport.use(new GoogleStrategy({
   }
 }));
 
-const unauthenticatedRoutes = ['/login', '/forgot', '/signup'];
+const unauthenticatedRoutes = ['/', '/login', '/forgot', '/signup'];
 
 exports.authenticate = (req, res, next) => {
   if (contains(req.path, unauthenticatedRoutes) || req.path.startsWith('/reset')) {

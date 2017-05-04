@@ -2,9 +2,8 @@
 
 /**
  * GET /
- * Home page.
+ * Home endpoint.
  */
 exports.index = (req, res) => {
-  console.log(__dirname);
-  res.sendFile('/../public/dist/index.html');
+  res.send('Gcriva backend API');
 };

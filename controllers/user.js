@@ -137,8 +137,7 @@ exports.postUpdatePassword = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/account');
+    return res.status(422).json({ success: false, messages: errors });
   }
 
   User.get(req.user.id)
@@ -181,8 +180,7 @@ exports.postReset = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('back');
+    return res.status(422).json({ success: false, messages: errors });
   }
 
   const resetPassword = () =>

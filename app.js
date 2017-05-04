@@ -16,7 +16,6 @@ const path = require('path');
 const gstore = require('gstore-node');
 const passport = require('passport');
 const expressValidator = require('express-validator');
-const sass = require('node-sass-middleware');
 const multer = require('multer');
 
 const authentication = require('./config/authentication');
@@ -47,14 +46,8 @@ gstore.connect(datastore);
  * Express configuration.
  */
 app.set('port', process.env.PORT || 3000);
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
 app.use(responseError);
 app.use(compression());
-app.use(sass({
-  src: path.join(__dirname, 'public'),
-  dest: path.join(__dirname, 'public')
-}));
 app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -66,8 +59,9 @@ app.use((req, res, next) => {
   res.locals.user = req.user;
   next();
 });
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
-app.use(express.static(path.join(__dirname, 'public/dist'), { maxAge: 31557600000 }));
+
+// app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
+// app.use(express.static(path.join(__dirname, 'public/dist'), { maxAge: 31557600000 }));
 
 app.use(authentication.authenticate);
 
@@ -111,7 +105,7 @@ if (process.env.NODE_ENV === 'production') {
 /**
  * Start Express server.
  */
-app.listen(app.get('port'), () => {
+app.listen(process.env.APP_PORT || '3000', () => {
   console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env'));
   console.log('  Press CTRL-C to stop\n');
 });
