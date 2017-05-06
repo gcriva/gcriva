@@ -2,13 +2,14 @@
 
 const datastoreConfig = require('@google-cloud/datastore');
 
-const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_CREDENTIALS, 'base64'));
+const datastoreOptions = {
+  projectId: process.env.GCLOUD_PROJECT
+};
 
-const datastore = datastoreConfig({
-  projectId: process.env.GCLOUD_PROJECT,
-  credentials
-});
+if (process.env.GOOGLE_CREDENTIALS) {
+  datastoreOptions.credentials = JSON.parse(Buffer.from(process.env.GOOGLE_CREDENTIALS, 'base64'));
+}
 
-exports.credentials = credentials;
+const datastore = datastoreConfig(datastoreOptions);
 
 module.exports = datastore;

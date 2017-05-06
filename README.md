@@ -1,3 +1,7 @@
+[![CircleCI](https://circleci.com/gh/ArthurVilaca/gcriva.svg?style=svg)](https://circleci.com/gh/ArthurVilaca/gcriva)
+
+# Gcriva
+
 Management system for Gcriva, a nonprofit organization that supports children and teenagers.
 
 ## Project base
