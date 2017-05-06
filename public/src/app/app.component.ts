@@ -20,29 +20,21 @@ import { AppState } from './app.service';
   ],
   template: `
     <nav>
-      <a [routerLink]=" ['./'] "
-        routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
-        Index
-      </a>
       <a [routerLink]=" ['./home'] "
         routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
         Home
       </a>
-      <a [routerLink]=" ['./detail'] "
-        routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
-        Detail
-      </a>
-      <a [routerLink]=" ['./barrel'] "
-        routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
-        Barrel
-      </a>
       <a [routerLink]=" ['./about'] "
         routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
-        About
+        Sobre
       </a>
       <a [routerLink]=" ['./login'] "
         routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
         Login
+      </a>
+      <a [routerLink]=" ['./reset-password'] "
+        routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
+        Reset Password
       </a>
     </nav>
 
@@ -53,7 +45,7 @@ import { AppState } from './app.service';
 })
 export class AppComponent implements OnInit {
   public angularclassLogo = 'assets/img/angularclass-avatar.png';
-  public name = 'Angular 2 Webpack Starter';
+  public name = 'GCriva';
   public url = 'https://twitter.com/AngularClass';
 
   constructor(
