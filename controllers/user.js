@@ -247,7 +247,7 @@ exports.postForgot = (req, res, next) => {
   const setRandomToken = token =>
     User
       .findOne({ email: req.body.email })
-      .catch(res.error(404))
+      .catch(next)
       .then(user => {
         user.passwordResetToken = token;
         user.passwordResetExpires = Date.now() + 3600000; // 1 hour

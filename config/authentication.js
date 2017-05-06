@@ -51,6 +51,8 @@ passport.use(new JwtStrategy(jwtOptions, (jwtPayload, done) => {
 /**
  * Sign in with Google.
  */
+/* eslint-disable max-len */
+
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_ID,
   clientSecret: process.env.GOOGLE_SECRET,
@@ -106,6 +108,8 @@ passport.use(new GoogleStrategy({
   }
 }));
 
+/* eslint-enable max-len */
+
 const unauthenticatedRoutes = ['/', '/login', '/forgot', '/signup'];
 
 exports.authenticate = (req, res, next) => {
@@ -136,16 +140,3 @@ function authorizeEndpoint(roles, req, res, next) {
 
 exports.authorize = curry(authorizeEndpoint);
 exports.authorizeAdmin = exports.authorize('admin');
-
-/**
- * Authorization Required middleware.
- */
-exports.isAuthorized = (req, res, next) => {
-  const provider = req.path.split('/').slice(-1)[0];
-  const token = req.user.tokens.find(token => token.kind === provider);
-  if (token) {
-    next();
-  } else {
-    res.redirect(`/auth/${provider}`);
-  }
-};

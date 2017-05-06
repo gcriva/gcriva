@@ -30,3 +30,7 @@ bower_components
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Test artifacts
+.nyc_output
+coverage

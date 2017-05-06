@@ -13,9 +13,11 @@
   },
   "license": "MIT",
   "scripts": {
-    "start": "node app.js",
-    "test": "mocha --reporter spec",
-    "lint": "eslint --ignore-path .gitignore ./",
+    "start": "nodemon server.js",
+    "test": "DATASTORE_EMULATOR_HOST=localhost:8081 NODE_ENV=test mocha",
+    "test:coverage": "DATASTORE_EMULATOR_HOST=localhost:8081 NODE_ENV=test nyc --reporter=html --reporter=text mocha",
+    "lint": "eslint --ignore-path .gitignore --ignore-pattern 'public/**' ./ && echo $'\\360\\237\\215\\272  Lint free! \n'",
+    "validate": "npm-run-all lint test:coverage",
     "postinstall": "npm rebuild node-sass"
   },
   "dependencies": {
@@ -49,11 +51,17 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
+    "chai-subset": "^1.5.0",
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.1.3",
     "eslint-plugin-import": "^2.2.0",
     "mocha": "^3.1.2",
-    "sinon": "^2.0.0",
-    "supertest": "^3.0.0"
+    "mockery": "^2.0.0",
+    "nodemon": "^1.11.0",
+    "npm-run-all": "^4.0.2",
+    "nyc": "^10.3.0",
+    "supertest": "^3.0.0",
+    "testdouble": "^2.1.2"
   }
 }

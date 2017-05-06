@@ -1,5 +1,12 @@
 {
   "env": {
     "mocha": true
+  },
+  "globals": {
+    "should": true
+  },
+  "rules": {
+    "global-require": "off",
+    "class-methods-use-this": "off"
   }
 }
