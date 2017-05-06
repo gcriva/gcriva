@@ -5,7 +5,8 @@ general:
 machine:
   environment:
     PATH: "${PATH}:${HOME}/${CIRCLE_PROJECT_REPONAME}/node_modules/.bin"
-
+  post:
+    - nvm use && nvm alias default $(nvm current)
 dependencies:
   override:
     - yarn
