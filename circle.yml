@@ -1,0 +1,14 @@
+general:
+  artifacts:
+    - "coverage"
+
+dependencies:
+  override:
+    - yarn
+
+test:
+  pre:
+    - gcloud beta emulators datastore start --no-legacy 
+    - curl --retry 10 --retry-delay 5 -v http://localhost:8081 # make sure the Datastore emulator is ready
+  override:
+    - yarn validate
