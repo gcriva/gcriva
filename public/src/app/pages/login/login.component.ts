@@ -4,7 +4,7 @@ import { Http } from '@angular/http';
 import { MdSnackBar } from '@angular/material';
 
 @Component({
-  selector: 'about',
+  selector: 'login',
   styleUrls: ['./login-components.css'],
   templateUrl: './login.components.html'
 })

@@ -1,0 +1,20 @@
+<section>
+    toker: {{currentToken}}
+    <form>
+        <md-grid-list cols="1" rowHeight="100px">
+            <md-grid-tile>
+                <md-input-container>
+                    <input mdInput type="password" name="new-password" [(ngModel)]="reset.password" placeholder="Nova Senha">
+                </md-input-container>
+            </md-grid-tile>
+            <md-grid-tile>
+                <md-input-container>
+                    <input mdInput type="password" name="confirm-password" [(ngModel)]="reset.confirmPassword" placeholder="Confirmar Senha">
+                </md-input-container>
+            </md-grid-tile>
+            <md-grid-tile>
+                <button md-raised-button type="submit" (click)="resetPassword()">Confirmar</button>
+            </md-grid-tile>
+        </md-grid-list>
+    </form>
+</section>

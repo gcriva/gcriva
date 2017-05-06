@@ -32,6 +32,10 @@ import { AppState } from './app.service';
         routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
         Login
       </a>
+      <a [routerLink]=" ['./reset-password'] "
+        routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
+        Reset Password
+      </a>
     </nav>
 
     <main>

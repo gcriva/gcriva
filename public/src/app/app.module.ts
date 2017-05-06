@@ -41,6 +41,7 @@ import { MdButtonModule,
 import { HomeComponent } from './pages/home';
 import { AboutComponent } from './pages/about';
 import { LoginComponent } from './pages/login';
+import { ResetPasswordComponent } from './pages/reset-password';
 
 import '../styles/styles.scss';
 import '../styles/headings.css';
@@ -68,7 +69,8 @@ type StoreType = {
     HomeComponent,
     NoContentComponent,
     XLargeDirective,
-    LoginComponent
+    LoginComponent,
+    ResetPasswordComponent
   ],
   imports: [ // import Angular's modules
     BrowserModule,
