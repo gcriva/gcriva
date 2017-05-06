@@ -24,17 +24,22 @@ import { ROUTES } from './app.routes';
 import { AppComponent } from './app.component';
 import { APP_RESOLVER_PROVIDERS } from './app.resolver';
 import { AppState, InternalStateType } from './app.service';
-import { HomeComponent } from './home';
-import { AboutComponent } from './about';
 import { NoContentComponent } from './no-content';
-import { XLargeDirective } from './home/x-large';
+import { XLargeDirective } from './pages/home/x-large';
 
 // material
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MdButtonModule, MdCheckboxModule, MdGridListModule, MdInputModule } from '@angular/material';
+import { MdButtonModule,
+  MdCheckboxModule,
+  MdGridListModule,
+  MdInputModule,
+  MdSnackBarModule
+} from '@angular/material';
 
-//pages
+// pages
+import { HomeComponent } from './pages/home';
+import { AboutComponent } from './pages/about';
 import { LoginComponent } from './pages/login';
 
 import '../styles/styles.scss';
@@ -70,7 +75,11 @@ type StoreType = {
     FormsModule,
     HttpModule,
     RouterModule.forRoot(ROUTES, { useHash: true, preloadingStrategy: PreloadAllModules }),
-    BrowserAnimationsModule, MdButtonModule, MdCheckboxModule, MdGridListModule, MdInputModule
+    BrowserAnimationsModule, MdButtonModule,
+    MdCheckboxModule,
+    MdGridListModule,
+    MdInputModule,
+    MdSnackBarModule
   ],
   providers: [ // expose our Services and Providers into Angular's dependency injection
     ENV_PROVIDERS,
