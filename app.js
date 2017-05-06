@@ -27,6 +27,7 @@ const responseError = require('./utils/responseError');
 const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
 const apiController = require('./controllers/api');
+const beneficiariesController = require('./controllers/beneficiaries');
 
 const datastore = require('./config/datastore');
 
@@ -75,6 +76,10 @@ app.post('/reset/:token', userController.postReset);
 app.post('/signup', userController.postSignup);
 app.post('/account/password', userController.postUpdatePassword);
 app.post('/account/delete', authentication.authorizeAdmin, userController.postDeleteAccount);
+app.get('/beneficiaries', beneficiariesController.beneficiaries);
+app.post('/beneficiaries', beneficiariesController.create);
+app.delete('/beneficiaries/:id', beneficiariesController.delete);
+app.put('/beneficiaries/:id', beneficiariesController.update);
 
 /**
  * API examples routes.

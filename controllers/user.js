@@ -70,24 +70,23 @@ exports.postSignup = (req, res, next) => {
     req.body
   ));
 
-  User.findOne({ email: req.body.email })
-    .then(existingUser => {
-      if (existingUser) {
-        return res.status(422).json({ success: false, message: 'Já existe um usuário com este email.' });
-      }
+  User.findOne({ email: req.body.email }, (err, existingUser) => {
+    if (existingUser) {
+      return res.status(422).json({ success: false, message: 'Já existe um usuário com este email.' });
+    }
 
-      return user.save()
-        .then(() => {
-          req.logIn(user, err => {
-            if (err) {
-              return next(err);
-            }
+    user.save()
+      .then(() => {
+        req.logIn(user, err => {
+          if (err) {
+            return next(err);
+          }
 
-            res.json({ success: true, message: 'Usuário criado com sucesso!' });
-          });
+          res.json({ success: true, message: 'Usuário criado com sucesso!' });
         });
-    })
-    .catch(next);
+      })
+      .catch(next);
+  });
 };
 
 /**

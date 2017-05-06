@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const gstore = require('gstore-node');
 
 const userSchema = new gstore.Schema({
-  email: { type: 'string', isEmail: 'isEmail', required: true },
+  email: { type: 'string', validate: 'isEmail', required: true },
   password: { type: 'string', excludeFromIndexes: true },
   passwordResetToken: 'string',
   passwordResetExpires: 'datetime',
