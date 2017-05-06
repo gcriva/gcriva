@@ -6,7 +6,6 @@
     "should": true
   },
   "rules": {
-    "global-require": "off",
-    "class-methods-use-this": "off"
+    "global-require": "off"
   }
 }
