@@ -272,22 +272,22 @@ exports.postForgot = (req, res, next) => {
       subject: 'Redefinir sua senha no Gcriva',
       text: `Você está recebendo este email porquê você requisitou no sistema que sua senha fosse redefinida.\n\n
         Por favor clique nolink abaixo, ou o copie no seu navegador para completar o processo:\n\n
-        http://${req.headers.host}/reset/${token}\n\n
+        http://${req.headers.host}/#/reset-password/${token}\n\n
         Se você não requisitou a redefinição de senha, favor ignorar este email e sua senha continuará a mesma.\n\n
         Atenciosamente,\n\n
         Sistema Gcriva`
     };
-    return transporter.sendMail(mailOptions);
+    return transporter.sendMail(mailOptions)
+      .then(() => {
+        res.json({
+          success: true,
+          message: `Um email foi enviado para ${user.email} com as instruções de redefinição.`
+        });
+      });
   };
 
   createRandomToken
     .then(setRandomToken)
     .then(sendForgotPasswordEmail)
-    .then(() => {
-      res.json({
-        success: true,
-        message: `Um email foi enviado a ${user.email} com as instruções de redefinição.`
-      });
-    })
     .catch(next);
 };
