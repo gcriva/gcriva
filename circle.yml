@@ -18,7 +18,8 @@ test:
   pre:
     - sudo /opt/google-cloud-sdk/bin/gcloud -q components install beta
     - sudo /opt/google-cloud-sdk/bin/gcloud config set project $GCLOUD_PROJECT
-    - sudo /opt/google-cloud-sdk/bin/gcloud -q beta emulators datastore start --no-legacy 
+    - "sudo /opt/google-cloud-sdk/bin/gcloud -q beta emulators datastore start --no-legacy":
+      background: true
     - curl --retry 10 --retry-delay 2 -v http://localhost:8081 # make sure the Datastore emulator is ready
   override:
     - yarn validate
