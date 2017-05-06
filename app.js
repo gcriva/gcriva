@@ -2,18 +2,20 @@
 
 // Load environment variables from .env file, where API keys and passwords are configured.
 require('dotenv').config();
+const bluebird = require('bluebird');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+global.Promise = bluebird;
 
+const { is } = require('ramda');
 const express = require('express');
 const compression = require('compression');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
-const chalk = require('chalk');
-const rollbar = require('rollbar');
 const lusca = require('lusca');
 const path = require('path');
 const gstore = require('gstore-node');
+const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
 const multer = require('multer');
@@ -21,12 +23,14 @@ const multer = require('multer');
 const authentication = require('./config/authentication');
 const responseError = require('./utils/responseError');
 
+
 /**
  * Controllers (route handlers).
  */
 const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
 const apiController = require('./controllers/api');
+const projectsController = require('./controllers/projects');
 
 const datastore = require('./config/datastore');
 
@@ -45,20 +49,17 @@ gstore.connect(datastore);
 /**
  * Express configuration.
  */
-app.set('port', process.env.PORT || 3000);
+if (process.env.NODE_ENV !== 'test') {
+  app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
+}
 app.use(responseError);
 app.use(compression());
-app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(expressValidator());
 app.use(passport.initialize());
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));
-app.use((req, res, next) => {
-  res.locals.user = req.user;
-  next();
-});
 
 // app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
 // app.use(express.static(path.join(__dirname, 'public/dist'), { maxAge: 31557600000 }));
@@ -75,6 +76,10 @@ app.post('/reset/:token', userController.postReset);
 app.post('/signup', userController.postSignup);
 app.post('/account/password', userController.postUpdatePassword);
 app.post('/account/delete', authentication.authorizeAdmin, userController.postDeleteAccount);
+app.get('/projects', projectsController.index);
+app.post('/projects', authentication.authorizeAdmin, projectsController.create);
+app.put('/projects/:id', authentication.authorizeAdmin, projectsController.update);
+app.delete('/projects/:id', authentication.authorizeAdmin, projectsController.delete);
 
 /**
  * API examples routes.
@@ -91,23 +96,26 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
   res.redirect(req.session.returnTo || '/');
 });
 
-/**
- * Stringify thrown errors
- */
-app.use((error, req, res, next) => {
-  next(JSON.stringify(error, null, 2));
-});
-if (process.env.NODE_ENV === 'production') {
-  app.use(rollbar.errorHandler(process.env.ROLLBAR_TOKEN));
+
+const isValidationError = is(ValidationError);
+const isValidatorError = is(ValidatorError);
+
+function handleModelErrors(error, req, res, next) {
+  if (isValidationError(error) || isValidatorError(error)) {
+    res.error(422, error);
+  } else if (error.code === 404) {
+    res.error(404, error.message);
+  } else {
+    next(error);
+  }
 }
+app.use(handleModelErrors);
 
-
-/**
- * Start Express server.
- */
-app.listen(process.env.APP_PORT || '3000', () => {
-  console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env'));
-  console.log('  Press CTRL-C to stop\n');
-});
+if (process.env.NODE_ENV !== 'production') {
+  // Return the entire error for debugging purposes
+  app.use((error, req, res) => {
+    res.error(500, error);
+  });
+}
 
 module.exports = app;
