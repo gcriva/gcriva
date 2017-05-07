@@ -105,17 +105,14 @@ function handleModelErrors(error, req, res, next) {
     res.error(422, error);
   } else if (error.code === 404) {
     res.error(404, error.message);
+  } else if (process.env.NODE_ENV === 'development') {
+    // Show the entire error for debugging purposes
+    console.error(error);
+    res.error(500, error);
   } else {
     next(error);
   }
 }
 app.use(handleModelErrors);
-
-if (process.env.NODE_ENV !== 'production') {
-  // Return the entire error for debugging purposes
-  app.use((error, req, res) => {
-    res.error(500, error);
-  });
-}
 
 module.exports = app;

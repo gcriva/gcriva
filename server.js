@@ -9,6 +9,7 @@ if (process.env.NODE_ENV === 'production') {
   rollbar.handleUncaughtExceptionsAndRejections(process.env.ROLLBAR_TOKEN);
 }
 
-app.listen(process.env.PORT || '3000', () => {
-  console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env'));
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), port, process.env.NODE_ENV);
 });

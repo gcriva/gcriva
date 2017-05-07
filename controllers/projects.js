@@ -53,7 +53,7 @@ exports.delete = (req, res, next) => {
       if (!response.success) {
         res.error(404, 'O Projeto não foi encontrado');
       } else {
-        res.json({ key: response.key });
+        res.json({ id: response.key.id });
       }
     })
     .catch(next);

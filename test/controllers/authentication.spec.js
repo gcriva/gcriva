@@ -1,7 +1,7 @@
 'use strict';
 
 const request = require('supertest');
-const app = require('../app.js');
+const app = require('../../app.js');
 
 const isAuthorided = res => res.statusCode !== 401 && res.statusCode !== 403;
 

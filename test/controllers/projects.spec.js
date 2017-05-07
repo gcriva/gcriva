@@ -1,7 +1,7 @@
 'use strict';
 
 const request = require('supertest');
-const Project = require('../models/Project');
+const Project = require('../../models/Project');
 
 describe('projects controller', () => {
   let app;
@@ -11,7 +11,7 @@ describe('projects controller', () => {
   afterEach(() => Project.deleteAll());
 
   beforeEach(() => {
-    app = require('../app.js');
+    app = require('../../app.js');
   });
 
   it('/index: returns all the projects ', () => (
@@ -109,9 +109,7 @@ describe('projects controller', () => {
         ))
         .then(res => (
           res.body.should.containSubset({
-            key: {
-              id: Number.parseInt(project.entityKey.id, 10)
-            }
+            id: Number.parseInt(project.entityKey.id, 10)
           })
         ));
     });
