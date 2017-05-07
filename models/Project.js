@@ -1,6 +1,7 @@
 'use strict';
 
 const gstore = require('gstore-node');
+const { auditDelete, auditSave, setUpdatedAt } = require('./hooks');
 
 const projectSchema = new gstore.Schema({
   name: { type: 'string', required: true },
@@ -12,13 +13,9 @@ const projectSchema = new gstore.Schema({
   updatedAt: { type: 'datetime' }
 });
 
-projectSchema.pre('save', function preSave() {
-  const project = this;
-
-  project.updatedAt = new Date();
-
-  return Promise.resolve();
-});
+projectSchema.pre('save', setUpdatedAt);
+projectSchema.post('delete', auditDelete);
+projectSchema.pre('save', auditSave);
 
 const Project = gstore.model('Project', projectSchema);
 
