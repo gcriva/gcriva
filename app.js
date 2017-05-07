@@ -22,7 +22,6 @@ const cors = require('cors');
 const authentication = require('./config/authentication');
 const responseError = require('./utils/responseError');
 
-
 /**
  * Controllers (route handlers).
  */
