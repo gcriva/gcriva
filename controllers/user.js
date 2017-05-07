@@ -272,7 +272,7 @@ exports.postForgot = (req, res, next) => {
       subject: 'Redefinir sua senha no Gcriva',
       text: `Você está recebendo este email porquê você requisitou no sistema que sua senha fosse redefinida.\n\n
         Por favor clique nolink abaixo, ou o copie no seu navegador para completar o processo:\n\n
-        http://${req.headers.host}/#/reset-password/${token}\n\n
+        http://${process.env.CLIENT_URL}/#/reset-password/${token}\n\n
         Se você não requisitou a redefinição de senha, favor ignorar este email e sua senha continuará a mesma.\n\n
         Atenciosamente,\n\n
         Sistema Gcriva`
