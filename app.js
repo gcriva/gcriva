@@ -19,6 +19,7 @@ const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
 const multer = require('multer');
+const cors = require('cors');
 
 const authentication = require('./config/authentication');
 const responseError = require('./utils/responseError');
@@ -52,6 +53,8 @@ gstore.connect(datastore);
 if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
+
+app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(responseError);
 app.use(compression());
 app.use(bodyParser.json());
@@ -60,9 +63,6 @@ app.use(expressValidator());
 app.use(passport.initialize());
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));
-
-// app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
-// app.use(express.static(path.join(__dirname, 'public/dist'), { maxAge: 31557600000 }));
 
 app.use(authentication.authenticate);
 
