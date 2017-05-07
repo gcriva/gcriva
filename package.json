@@ -1,10 +1,10 @@
 {
   "name": "gcriva",
   "version": "1.0.0",
-  "description": "A Gcriva Management system",
+  "description": "Gcriva's Management system",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ArthurVilaca/gcriva.git"
+    "url": "https://github.com/gcriva/gcriva.git"
   },
   "author": {
     "name": "Arthur Fonseca Vilaça",
