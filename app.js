@@ -13,12 +13,10 @@ const compression = require('compression');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 const lusca = require('lusca');
-const path = require('path');
 const gstore = require('gstore-node');
 const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
-const multer = require('multer');
 const cors = require('cors');
 
 const authentication = require('./config/authentication');
@@ -30,12 +28,9 @@ const responseError = require('./utils/responseError');
  */
 const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
-const apiController = require('./controllers/api');
 const projectsController = require('./controllers/projects');
 
 const datastore = require('./config/datastore');
-
-const upload = multer({ dest: path.join(__dirname, 'uploads') });
 
 /**
  * Create Express server.
@@ -80,13 +75,6 @@ app.get('/projects', projectsController.index);
 app.post('/projects', authentication.authorizeAdmin, projectsController.create);
 app.put('/projects/:id', authentication.authorizeAdmin, projectsController.update);
 app.delete('/projects/:id', authentication.authorizeAdmin, projectsController.delete);
-
-/**
- * API examples routes.
- */
-app.get('/api', apiController.getApi);
-app.get('/api/upload', apiController.getFileUpload);
-app.post('/api/upload', upload.single('myFile'), apiController.postFileUpload);
 
 /**
  * OAuth authentication routes. (Sign in)
