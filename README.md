@@ -1,8 +1,8 @@
-[![CircleCI](https://circleci.com/gh/ArthurVilaca/gcriva.svg?style=svg)](https://circleci.com/gh/ArthurVilaca/gcriva)
+[![CircleCI](https://circleci.com/gh/gcriva/gcriva-backend.svg?style=svg)](https://circleci.com/gh/gcriva/gcriva-backend)
 
-# Gcriva
+# Gcriva API
 
-Management system for Gcriva, a nonprofit organization that supports children and teenagers.
+API for the Gcriva's management. Gcriva is a nonprofit organization that supports children and teenagers.
 
 ## Project base
 * Based on hackathon-starter boilerplate
@@ -10,5 +10,5 @@ Management system for Gcriva, a nonprofit organization that supports children an
 ## How to run the code
 
 ###
-1. Run `yarn` (if you don't have yarn, run `npm i -g yarn`)
+1. Run `npm install`
 2. Run `npm start`
