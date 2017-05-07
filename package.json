@@ -16,7 +16,7 @@
     "start": "nodemon server.js",
     "test": "DATASTORE_EMULATOR_HOST=localhost:8081 NODE_ENV=test mocha 'test/**/*.spec.js'",
     "test:coverage": "DATASTORE_EMULATOR_HOST=localhost:8081 NODE_ENV=test nyc --reporter=html --reporter=text mocha 'test/**/*.spec.js'",
-    "lint": "eslint --ignore-path .gitignore --ignore-pattern 'public/**' ./ && echo $'\\360\\237\\215\\272  Lint free! \n'",
+    "lint": "eslint --ignore-path .gitignore ./ && echo $'\\360\\237\\215\\272  Lint free! \n'",
     "validate": "npm-run-all lint test:coverage",
     "postinstall": "npm rebuild @google-cloud/datastore"
   },

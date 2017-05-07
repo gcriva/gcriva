@@ -14,9 +14,7 @@ machine:
 
 dependencies:
   override:
-    - yarn
-  cache_directories:
-    - ~/.cache/yarn
+    - npm install
 
 test:
   pre:
@@ -24,7 +22,7 @@ test:
         background: true
     - sleep 10 # make sure the Datastore emulator is ready
   override:
-    - yarn validate
+    - npm run validate
 
 deployment:
   production:
