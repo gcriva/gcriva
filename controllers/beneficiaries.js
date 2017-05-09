@@ -15,23 +15,23 @@ exports.beneficiaries = (req, res, next) => {
 
 exports.create = (req, res, next) => {
   const beneficiary = new Beneficiary(pick(
-      ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
-      req.body.beneficiary
-    ));
+    ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
+    req.body.beneficiary
+  ));
   beneficiary.save()
-  .then(() => {
-    res.json({ beneficiary: beneficiary.plain() });
-  })
-  .catch(err => {
-    console.log(err);
-  });
+    .then(() => {
+      res.json({ beneficiary: beneficiary.plain() });
+    })
+    .catch(next);
 };
 
 exports.update = (req, res, next) => {
-  const beneficiary = pick(['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'], req.body.beneficiary);
+  const beneficiary = pick(
+    ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
+    req.body.beneficiary
+  );
   Beneficiary.update(req.params.id, beneficiary)
   .then((updatedBeneficiary) => {
-    console.log(updatedBeneficiary);
     res.json({ beneficiary: updatedBeneficiary.plain() });
   })
   .catch(next);
@@ -43,7 +43,7 @@ exports.delete = (req, res, next) => {
     if (response.success) {
       res.json({ key: response.key });
     } else {
-      res.error(404, 'Beneficiário não foi encontrado');
+      res.error(404, res.t('notFound', res.t('beneficiary')));
     }
   })
   .catch(next);

@@ -2,6 +2,7 @@
 
 // Load environment variables from .env file, where API keys and passwords are configured.
 require('dotenv').config();
+const configureI18n = require('./config/i18n');
 const bluebird = require('bluebird');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -45,10 +46,10 @@ gstore.connect(datastore);
 /**
  * Express configuration.
  */
+configureI18n(app);
 if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
-
 app.use(cors({ origin: [process.env.CLIENT_URL, /\.gcriva\.ml$/] }));
 app.use(responseError);
 app.use(compression());

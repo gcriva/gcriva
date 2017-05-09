@@ -1,0 +1,23 @@
+{
+  "notFound": "%s não encontrado",
+  "userCreated": "Usuário criado com sucesso",
+  "userAlreadyCreated": "Já existe um usuário com este email",
+  "authFail": "Falha na autenticação. Verifique se a senha foi digitada corretamente.",
+  "thisSystem": "Sistema Gcriva",
+  "passwordReset": {
+    "emailSent": "Um email foi enviado para %s com as instruções de redefinição",
+    "success": "Senha alterada com sucesso",
+    "expiredToken": "O token de redefinição de senha expirou",
+    "confirmationHeader": "A sua senha no Sistema Gcriva foi alterada",
+    "confirmation": "Essa é uma confirmação de que a senha da sua conta %s foi alterada com sucesso.",
+    "header": "Redefinir sua senha no Gcriva",
+    "emailExplanation": "Você está recebendo este email porquê você requisitou no sistema que sua senha fosse redefinida.",
+    "clickResetLink": "Por favor clique no link abaixo, ou o copie no seu navegador para completar o processo",
+    "disregardEmail": "Se você não requisitou a redefinição de senha, favor ignorar este email e sua senha continuará a mesma.",
+    "ending": "Atenciosamente"
+  },
+  "greeting": "Olá %s",
+
+  "project": "Projeto",
+  "beneficiary": "Beneficiário"
+}
