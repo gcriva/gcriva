@@ -13,29 +13,24 @@ const compression = require('compression');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 const lusca = require('lusca');
-const path = require('path');
 const gstore = require('gstore-node');
 const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
-const multer = require('multer');
+const cors = require('cors');
 
 const authentication = require('./config/authentication');
 const responseError = require('./utils/responseError');
-
 
 /**
  * Controllers (route handlers).
  */
 const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
-const apiController = require('./controllers/api');
 const beneficiariesController = require('./controllers/beneficiaries');
 const projectsController = require('./controllers/projects');
 
 const datastore = require('./config/datastore');
-
-const upload = multer({ dest: path.join(__dirname, 'uploads') });
 
 /**
  * Create Express server.
@@ -53,6 +48,8 @@ gstore.connect(datastore);
 if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
+
+app.use(cors({ origin: [process.env.CLIENT_URL, /\.gcriva\.ml$/] }));
 app.use(responseError);
 app.use(compression());
 app.use(bodyParser.json());
@@ -61,9 +58,6 @@ app.use(expressValidator());
 app.use(passport.initialize());
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));
-
-// app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
-// app.use(express.static(path.join(__dirname, 'public/dist'), { maxAge: 31557600000 }));
 
 app.use(authentication.authenticate);
 
@@ -87,13 +81,6 @@ app.put('/projects/:id', authentication.authorizeAdmin, projectsController.updat
 app.delete('/projects/:id', authentication.authorizeAdmin, projectsController.delete);
 
 /**
- * API examples routes.
- */
-app.get('/api', apiController.getApi);
-app.get('/api/upload', apiController.getFileUpload);
-app.post('/api/upload', upload.single('myFile'), apiController.postFileUpload);
-
-/**
  * OAuth authentication routes. (Sign in)
  */
 app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
@@ -110,17 +97,14 @@ function handleModelErrors(error, req, res, next) {
     res.error(422, error);
   } else if (error.code === 404) {
     res.error(404, error.message);
+  } else if (process.env.NODE_ENV === 'development') {
+    // Show the entire error for debugging purposes
+    console.error(error);
+    res.error(500, error);
   } else {
     next(error);
   }
 }
 app.use(handleModelErrors);
-
-if (process.env.NODE_ENV !== 'production') {
-  // Return the entire error for debugging purposes
-  app.use((error, req, res) => {
-    res.error(500, error);
-  });
-}
 
 module.exports = app;
