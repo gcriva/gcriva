@@ -19,7 +19,9 @@ const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
 const cors = require('cors');
+const multer = require('multer');
 
+require('./config/cloudinary')();
 const authentication = require('./config/authentication');
 const responseError = require('./utils/responseError');
 
@@ -71,6 +73,7 @@ app.post('/forgot', userController.postForgot);
 app.post('/reset/:token', userController.postReset);
 app.post('/signup', userController.postSignup);
 app.post('/account/password', userController.postUpdatePassword);
+app.post('/account/image', multer().single('picture'), userController.updatePicture);
 app.post('/account/delete', authentication.authorizeAdmin, userController.postDeleteAccount);
 app.get('/beneficiaries', beneficiariesController.beneficiaries);
 app.post('/beneficiaries', beneficiariesController.create);

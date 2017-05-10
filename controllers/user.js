@@ -4,11 +4,11 @@ const bluebird = require('bluebird');
 const crypto = bluebird.promisifyAll(require('crypto'));
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const cloudinary = require('cloudinary');
 const { pick } = require('ramda');
+const stream = require('stream');
 const User = require('../models/User');
 const locals = require('../config/locals');
-
-// TODO: fix functions that use req.flash
 
 /**
  * POST /login
@@ -29,13 +29,7 @@ exports.postLogin = (req, res) => {
     .then(user => {
       user.comparePassword(req.body.password, (err, isMatch) => {
         if (isMatch && !err) {
-          const userJwtData = pick(
-            ['id', 'name', 'email', 'roles', 'picture'],
-            user.plain()
-          );
-          const token = jwt.sign(userJwtData, locals.appSecret, {
-            expiresIn: '7d'
-          });
+          const token = generateUserToken(user);
 
           res.json({ success: true, token });
         } else {
@@ -45,6 +39,16 @@ exports.postLogin = (req, res) => {
     })
     .catch(() => res.status(404).json({ success: false, message: 'Usuário não encontrado' }));
 };
+
+function generateUserToken(user) {
+  const userJwtData = pick(
+    ['id', 'name', 'email', 'roles', 'picture'],
+    user.plain()
+  );
+  return jwt.sign(userJwtData, locals.appSecret, {
+    expiresIn: '7d'
+  });
+}
 
 /**
  * POST /signup
@@ -74,13 +78,9 @@ exports.postSignup = (req, res, next) => {
 
     user.save()
       .then(() => {
-        req.logIn(user, err => {
-          if (err) {
-            return next(err);
-          }
+        const token = generateUserToken(user);
 
-          res.json({ success: true, message: res.t('userCreated') });
-        });
+        res.json({ success: true, message: res.t('userCreated'), token });
       })
       .catch(next);
   });
@@ -314,3 +314,23 @@ function buildEmailParts(user, token, res) {
 
   return { salutation, paragraphs };
 }
+
+exports.updatePicture = (req, res, next) => {
+  const cloudinaryUploadStream = cloudinary.uploader.upload_stream(result => {
+    if (!result || result.error) {
+      res.error(500, result.error.message);
+    } else {
+      User.update(req.user.id, { picture: result.secure_url })
+        .then(user => {
+          const newToken = generateUserToken(user);
+
+          res.json({ picture: user.picture, token: newToken });
+        })
+        .catch(next);
+    }
+  });
+  const bufferStream = new stream.PassThrough();
+
+  bufferStream.end(req.file.buffer);
+  bufferStream.pipe(cloudinaryUploadStream);
+};
