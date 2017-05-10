@@ -3,7 +3,7 @@
 const Events = require('../models/Event');
 const { pick } = require('ramda');
 
-exports.event = (req, res, next) => {
+exports.index = (req, res, next) => {
   Events.list()
     .then(response => {
       res.json({

@@ -24,6 +24,6 @@ coursesSchema.pre('save', setUpdatedAt);
 coursesSchema.post('delete', auditDelete);
 coursesSchema.pre('save', auditSave);
 
-const Course = gstore.model('Beneficiary', coursesSchema);
+const Course = gstore.model('Course', coursesSchema);
 
 module.exports = Course;

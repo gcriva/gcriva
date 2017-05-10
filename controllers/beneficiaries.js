@@ -3,7 +3,7 @@
 const Beneficiary = require('../models/Beneficiary');
 const { pick } = require('ramda');
 
-exports.beneficiaries = (req, res, next) => {
+exports.index = (req, res, next) => {
   Beneficiary.list()
     .then(response => {
       res.json({

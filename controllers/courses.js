@@ -3,7 +3,7 @@
 const Course = require('../models/Course');
 const { pick } = require('ramda');
 
-exports.course = (req, res, next) => {
+exports.index = (req, res, next) => {
   Course.list()
     .then(response => {
       res.json({
