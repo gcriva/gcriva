@@ -51,7 +51,7 @@ exports.delete = (req, res, next) => {
   Project.delete(req.params.id)
     .then(response => {
       if (!response.success) {
-        res.error(404, 'O Projeto não foi encontrado');
+        res.error(404, res.t('notFound', res.t('project')));
       } else {
         res.json({ id: response.key.id });
       }

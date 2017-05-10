@@ -2,6 +2,7 @@
 
 // Load environment variables from .env file, where API keys and passwords are configured.
 require('dotenv').config();
+const configureI18n = require('./config/i18n');
 const bluebird = require('bluebird');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -18,7 +19,9 @@ const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
 const cors = require('cors');
+const multer = require('multer');
 
+require('./config/cloudinary')();
 const authentication = require('./config/authentication');
 const responseError = require('./utils/responseError');
 
@@ -27,9 +30,10 @@ const responseError = require('./utils/responseError');
  */
 const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
-const projectsController = require('./controllers/projects');
 const beneficiariesController = require('./controllers/beneficiaries');
+const projectsController = require('./controllers/projects');
 const eventsController = require('./controllers/events');
+const coursesController = require('./controllers/courses');
 
 const datastore = require('./config/datastore');
 
@@ -46,10 +50,10 @@ gstore.connect(datastore);
 /**
  * Express configuration.
  */
+configureI18n(app);
 if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
-
 app.use(cors({ origin: [process.env.CLIENT_URL, /\.gcriva\.ml$/] }));
 app.use(responseError);
 app.use(compression());
@@ -71,7 +75,12 @@ app.post('/forgot', userController.postForgot);
 app.post('/reset/:token', userController.postReset);
 app.post('/signup', userController.postSignup);
 app.post('/account/password', userController.postUpdatePassword);
+app.post('/account/image', multer().single('picture'), userController.updatePicture);
 app.post('/account/delete', authentication.authorizeAdmin, userController.postDeleteAccount);
+app.get('/beneficiaries', beneficiariesController.beneficiaries);
+app.post('/beneficiaries', beneficiariesController.create);
+app.delete('/beneficiaries/:id', beneficiariesController.delete);
+app.put('/beneficiaries/:id', beneficiariesController.update);
 app.get('/projects', projectsController.index);
 app.post('/projects', authentication.authorizeAdmin, projectsController.create);
 app.put('/projects/:id', authentication.authorizeAdmin, projectsController.update);
@@ -82,8 +91,11 @@ app.delete('/beneficiaries/:id', beneficiariesController.delete);
 app.put('/beneficiaries/:id', beneficiariesController.update);
 app.get('/events', eventsController.events);
 app.post('/events', eventsController.create);
-app.get('/courses', coursesController.beneficiaries);
+app.put('/events/:id', eventsController.update);
+app.delete('/events/:id', eventsController.delete);
+app.get('/courses', coursesController.couse);
 app.post('/courses', coursesController.create);
+app.put('/courses/:id', coursesController.update);
 app.delete('/courses/:id', coursesController.delete);
 
 /**

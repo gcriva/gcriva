@@ -1,35 +1,35 @@
 'use strict';
 
-const Events = require('../models/Events');
+const Events = require('../models/Event');
 const { pick } = require('ramda');
 
-exports.events = (req, res, next) => {
+exports.event = (req, res, next) => {
   Events.list()
     .then(response => {
       res.json({
-        events: response.entities
+        event: response.entities
       });
     })
     .catch(next);
 };
 
 exports.create = (req, res, next) => {
-  const events = new Events(pick(
+  const event = new Events(pick(
       ['name', 'dateStart', 'dateEnd', 'description'],
-      req.body.events
+      req.body.event
     ));
-  events.save()
+  event.save()
   .then(() => {
-    res.json({ events: events.plain() });
+    res.json({ event: event.plain() });
   })
   .catch(next);
 };
 
 exports.update = (req, res, next) => {
-  const events = pick(['name', 'dateStart', 'dateEnd', 'description'], req.body.events);
-  Events.update(req.params.id, beneficiary)
-  .then((updatedEvents) => {
-    res.json({ events: updatedEvents.plain() });
+  const event = pick(['name', 'dateStart', 'dateEnd', 'description'], req.body.event);
+  Events.update(req.params.id, event)
+  .then((updatedEvent) => {
+    res.json({ event: updatedEvent.plain() });
   })
   .catch(next);
 };
@@ -44,5 +44,4 @@ exports.delete = (req, res, next) => {
     }
   })
   .catch(next);
-
 };

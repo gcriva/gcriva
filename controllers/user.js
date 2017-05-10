@@ -4,11 +4,11 @@ const bluebird = require('bluebird');
 const crypto = bluebird.promisifyAll(require('crypto'));
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const cloudinary = require('cloudinary');
 const { pick } = require('ramda');
+const stream = require('stream');
 const User = require('../models/User');
 const locals = require('../config/locals');
-
-// TODO: fix functions that use req.flash
 
 /**
  * POST /login
@@ -29,25 +29,26 @@ exports.postLogin = (req, res) => {
     .then(user => {
       user.comparePassword(req.body.password, (err, isMatch) => {
         if (isMatch && !err) {
-          const userJwtData = pick(
-            ['id', 'name', 'email', 'roles', 'picture'],
-            user.plain()
-          );
-          const token = jwt.sign(userJwtData, locals.appSecret, {
-            expiresIn: '7d'
-          });
+          const token = generateUserToken(user);
 
           res.json({ success: true, token });
         } else {
-          res.error(422, {
-            success: false,
-            message: 'Falha na autenticação. Verifique se a senha foi digitada corretamente.'
-          });
+          res.error(422, { success: false, message: res.t('authFail') });
         }
       });
     })
     .catch(() => res.status(404).json({ success: false, message: 'Usuário não encontrado' }));
 };
+
+function generateUserToken(user) {
+  const userJwtData = pick(
+    ['id', 'name', 'email', 'roles', 'picture'],
+    user.plain()
+  );
+  return jwt.sign(userJwtData, locals.appSecret, {
+    expiresIn: '7d'
+  });
+}
 
 /**
  * POST /signup
@@ -70,24 +71,19 @@ exports.postSignup = (req, res, next) => {
     req.body
   ));
 
-  User.findOne({ email: req.body.email })
-    .then(existingUser => {
-      if (existingUser) {
-        return res.status(422).json({ success: false, message: 'Já existe um usuário com este email.' });
-      }
+  User.findOne({ email: req.body.email }, (err, existingUser) => {
+    if (existingUser) {
+      return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
+    }
 
-      return user.save()
-        .then(() => {
-          req.logIn(user, err => {
-            if (err) {
-              return next(err);
-            }
+    user.save()
+      .then(() => {
+        const token = generateUserToken(user);
 
-            res.json({ success: true, message: 'Usuário criado com sucesso!' });
-          });
-        });
-    })
-    .catch(next);
+        res.json({ success: true, message: res.t('userCreated'), token });
+      })
+      .catch(next);
+  });
 };
 
 /**
@@ -145,14 +141,14 @@ exports.postUpdatePassword = (req, res, next) => {
       user.comparePassword(req.body.currentPassword, (err, isMatch) => {
         if (isMatch && !err) {
           user.save()
-            .then(() => res.json({ message: 'Senha alterada com sucesso' }))
+            .then(() => res.json({ message: res.t('passwordReset.success') }))
             .catch(next);
         } else {
-          res.error(422, 'Falha na autenticação. Verifique se a senha atual foi digitada corretamente.');
+          res.error(422, res.t('authFail'));
         }
       });
     })
-    .catch(res.error(404));
+    .catch(next);
 };
 
 /**
@@ -188,7 +184,7 @@ exports.postReset = (req, res, next) => {
       .findOne({ passwordResetToken: req.params.token })
       .then((user) => {
         if (user.passwordResetExpires < Date.now()) {
-          res.error(422, 'O token de redefinição de senha expirou.');
+          res.error(422, res.t('passwordReset.expiredToken'));
 
           throw new Error(`O token de redefinição de senha expirou. email: ${user.email}`);
         }
@@ -206,11 +202,14 @@ exports.postReset = (req, res, next) => {
         pass: process.env.SENDGRID_PASSWORD
       }
     });
+    const { salutation, paragraphs } = buildConfirmationEmailParts(user, res);
+    const paragraphTags = paragraphs.map(p => (p === ' ' ? '<br/>' : `<p>${p}</p>`));
     const mailOptions = {
       to: user.email,
-      from: 'Sistema Gcriva <no-reply@gcriva.com>',
-      subject: 'A sua senha no Sistema Gcriva foi alterada',
-      text: `Olá ${user.name},\n\nEssa é uma confirmação de que a senha da sua conta ${user.email} foi alterada com sucesso.\n\nObrigado!`
+      from: `${res.t('thisSystem')} <no-reply@gcriva.ml>`,
+      subject: res.t('passwordReset.confirmationHeader'),
+      text: `${salutation},\n\n${paragraphs.join('\n\n')}`,
+      html: `<p>${salutation},</p>${paragraphTags.join('\n')}`
     };
     return transporter.sendMail(mailOptions);
   };
@@ -220,11 +219,23 @@ exports.postReset = (req, res, next) => {
     .then(() => {
       res.json({
         success: true,
-        message: 'Senha alterada com sucesso!'
+        message: res.t('passwordReset.success')
       });
     })
     .catch(next);
 };
+
+function buildConfirmationEmailParts(user, res) {
+  const salutation = res.t('greeting', user.name);
+  const paragraphs = [
+    res.t('passwordReset.confirmation', user.email),
+    ' ',
+    `${res.t('passwordReset.ending')},`,
+    res.t('thisSystem')
+  ];
+
+  return { salutation, paragraphs };
+}
 
 /**
  * POST /forgot
@@ -237,7 +248,7 @@ exports.postForgot = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    return res.error(422, { success: false, message: errors[0] });
+    return res.error(422, { success: false, messages: errors });
   }
 
   const createRandomToken = crypto
@@ -266,23 +277,19 @@ exports.postForgot = (req, res, next) => {
         pass: process.env.SENDGRID_PASSWORD
       }
     });
+    const { salutation, paragraphs } = buildEmailParts(user, token, res);
+    const paragraphTags = paragraphs.map(p => (p === ' ' ? '<br/>' : `<p>${p}</p>`));
     const mailOptions = {
       to: user.email,
-      from: 'Sistema Gcriva <no-reply@gcriva.com>',
-      subject: 'Redefinir sua senha no Gcriva',
-      text: `Você está recebendo este email porquê você requisitou no sistema que sua senha fosse redefinida.\n\n
-        Por favor clique nolink abaixo, ou o copie no seu navegador para completar o processo:\n\n
-        http://${process.env.CLIENT_URL}/#/reset-password/${token}\n\n
-        Se você não requisitou a redefinição de senha, favor ignorar este email e sua senha continuará a mesma.\n\n
-        Atenciosamente,\n\n
-        Sistema Gcriva`
+      from: `${res.t('thisSystem')} <no-reply@gcriva.ml>`,
+      subject: res.t('passwordReset.header'),
+      text: `${salutation},\n\n${paragraphs.join('\n\n')}`,
+      html: `<p>${salutation},</p>${paragraphTags.join('\n')}`
     };
+
     return transporter.sendMail(mailOptions)
       .then(() => {
-        res.json({
-          success: true,
-          message: `Um email foi enviado para ${user.email} com as instruções de redefinição.`
-        });
+        res.json({ success: true, message: res.t('passwordReset.emailSent', user.email) });
       });
   };
 
@@ -290,4 +297,40 @@ exports.postForgot = (req, res, next) => {
     .then(setRandomToken)
     .then(sendForgotPasswordEmail)
     .catch(next);
+};
+
+function buildEmailParts(user, token, res) {
+  const salutation = res.t('greeting', user.name);
+  const paragraphs = [
+    ' ',
+    res.t('passwordReset.emailExplanation'),
+    res.t('passwordReset.clickResetLink'),
+    `http://${process.env.CLIENT_URL}/#/reset-password/${token}`,
+    res.t('passwordReset.disregardEmail'),
+    ' ',
+    `${res.t('passwordReset.ending')},`,
+    res.t('thisSystem')
+  ];
+
+  return { salutation, paragraphs };
+}
+
+exports.updatePicture = (req, res, next) => {
+  const cloudinaryUploadStream = cloudinary.uploader.upload_stream(result => {
+    if (!result || result.error) {
+      res.error(500, result.error.message);
+    } else {
+      User.update(req.user.id, { picture: result.secure_url })
+        .then(user => {
+          const newToken = generateUserToken(user);
+
+          res.json({ picture: user.picture, token: newToken });
+        })
+        .catch(next);
+    }
+  });
+  const bufferStream = new stream.PassThrough();
+
+  bufferStream.end(req.file.buffer);
+  bufferStream.pipe(cloudinaryUploadStream);
 };

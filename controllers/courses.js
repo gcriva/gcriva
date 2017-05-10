@@ -14,23 +14,23 @@ exports.course = (req, res, next) => {
 };
 
 exports.create = (req, res, next) => {
-  const courses = new Course(pick(
+  const course = new Course(pick(
       ['name', 'dateStar', 'dateEnd', 'place', 'description'],
-      req.body.beneficiary
+      req.body.course
     ));
-  courses.save()
+  course.save()
   .then(() => {
-    res.json({ course: courses.plain() });
+    res.json({ course: course.plain() });
   })
   .catch(next);
 };
 
 exports.update = (req, res, next) => {
-  const courses = pick(['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'], req.body.beneficiary);
-  Course.update(req.params.id, courses)
-  .then((updatedCourses) => {
-    console.log(updatedCourses);
-    res.json({ courses: updatedCourses.plain() });
+  const course = pick(['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'], req.body.beneficiary);
+  Course.update(req.params.id, course)
+  .then((updatedCourse) => {
+    console.log(updatedCourse);
+    res.json({ course: updatedCourse.plain() });
   })
   .catch(next);
 };
