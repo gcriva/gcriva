@@ -3,7 +3,7 @@
 const Beneficiary = require('../models/Beneficiary');
 const { pick } = require('ramda');
 
-exports.beneficiaries = (req, res, next) => {
+exports.index = (req, res, next) => {
   Beneficiary.list()
     .then(response => {
       res.json({
@@ -15,14 +15,14 @@ exports.beneficiaries = (req, res, next) => {
 
 exports.create = (req, res, next) => {
   const beneficiary = new Beneficiary(pick(
-    ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
-    req.body.beneficiary
-  ));
+      ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
+      req.body.beneficiary
+    ));
   beneficiary.save()
-    .then(() => {
-      res.json({ beneficiary: beneficiary.plain() });
-    })
-    .catch(next);
+  .then(() => {
+    res.json({ beneficiary: beneficiary.plain() });
+  })
+  .catch(next);
 };
 
 exports.update = (req, res, next) => {
@@ -39,12 +39,12 @@ exports.update = (req, res, next) => {
 
 exports.delete = (req, res, next) => {
   Beneficiary.delete(req.params.id)
-  .then((response) => {
-    if (response.success) {
-      res.json({ key: response.key });
-    } else {
-      res.error(404, res.t('notFound', res.t('beneficiary')));
-    }
-  })
-  .catch(next);
+    .then((response) => {
+      if (response.success) {
+        res.json({ id: response.key.id });
+      } else {
+        res.error(404, res.t('notFound', res.t('beneficiary')));
+      }
+    })
+    .catch(next);
 };

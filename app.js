@@ -32,6 +32,8 @@ const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
 const beneficiariesController = require('./controllers/beneficiaries');
 const projectsController = require('./controllers/projects');
+const eventsController = require('./controllers/events');
+const coursesController = require('./controllers/courses');
 
 const datastore = require('./config/datastore');
 
@@ -75,7 +77,7 @@ app.post('/signup', userController.postSignup);
 app.post('/account/password', userController.postUpdatePassword);
 app.post('/account/image', multer().single('picture'), userController.updatePicture);
 app.post('/account/delete', authentication.authorizeAdmin, userController.postDeleteAccount);
-app.get('/beneficiaries', beneficiariesController.beneficiaries);
+app.get('/beneficiaries', beneficiariesController.index);
 app.post('/beneficiaries', beneficiariesController.create);
 app.delete('/beneficiaries/:id', beneficiariesController.delete);
 app.put('/beneficiaries/:id', beneficiariesController.update);
@@ -83,6 +85,14 @@ app.get('/projects', projectsController.index);
 app.post('/projects', authentication.authorizeAdmin, projectsController.create);
 app.put('/projects/:id', authentication.authorizeAdmin, projectsController.update);
 app.delete('/projects/:id', authentication.authorizeAdmin, projectsController.delete);
+app.get('/events', eventsController.index);
+app.post('/events', eventsController.create);
+app.put('/events/:id', eventsController.update);
+app.delete('/events/:id', eventsController.delete);
+app.get('/courses', coursesController.index);
+app.post('/courses', coursesController.create);
+app.put('/courses/:id', coursesController.update);
+app.delete('/courses/:id', coursesController.delete);
 
 /**
  * OAuth authentication routes. (Sign in)
