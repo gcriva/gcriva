@@ -55,7 +55,9 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
 app.use(cors({
-  origin: process.env.NODE_ENV === 'development' ? '*' : [process.env.CLIENT_URL, /\.gcriva\.ml$/]
+  origin: process.env.NODE_ENV === 'development'
+    ? '*' :
+    [process.env.CLIENT_URL, /\.gcriva\.ml$/, /\.gcriva\.netlify\.com$/]
 }));
 app.use(responseError);
 app.use(compression());
