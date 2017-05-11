@@ -54,7 +54,7 @@ function generateUserToken(user) {
  * POST /signup
  * Create a new local account.
  */
-exports.postSignup = (req, res, next) => {
+exports.signup = (req, res, next) => {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password must be at least 4 characters long').len(4);
   req.assert('confirmPassword', 'Passwords do not match').equals(req.body.password);
@@ -155,11 +155,13 @@ exports.postUpdatePassword = (req, res, next) => {
  * POST /account/delete
  * Delete user account.
  */
-exports.postDeleteAccount = (req, res, next) => {
+exports.delete = (req, res, next) => {
   User.delete(req.body.id)
     .then(response => {
       if (!response.success) {
-        res.error(404, 'Usuário não foi encontrado.');
+        res.error(404, res.t('notFound', res.t('user')));
+      } else {
+        res.json({ id: response.key.id });
       }
     })
     .catch(next);
