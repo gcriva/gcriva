@@ -18,7 +18,6 @@ const gstore = require('gstore-node');
 const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
 const passport = require('passport');
 const expressValidator = require('express-validator');
-const cors = require('cors');
 const multer = require('multer');
 
 require('./config/cloudinary')();
@@ -54,11 +53,21 @@ configureI18n(app);
 if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
-app.use(cors({
-  origin: process.env.NODE_ENV === 'development'
-    ? '*' :
-    [process.env.CLIENT_URL, /\.gcriva\.ml$/, /\.gcriva\.netlify\.com$/]
-}));
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Accept, Accept-Language, Content-Language, Content-Type');
+  const { origin } = req.headers;
+
+  if (/\.gcriva\.ml$/.test(origin) || /\.gcriva\.netlify\.com$/.test(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.send(204);
+  } else {
+    next();
+  }
+});
 app.use(responseError);
 app.use(compression());
 app.use(bodyParser.json());
