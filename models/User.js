@@ -32,26 +32,7 @@ userSchema.pre('save', function preSave() {
 
   user.updatedAt = new Date();
 
-  if (!user.password) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve, reject) => {
-    bcrypt.genSalt(10, (err, salt) => {
-      if (err) {
-        return reject(err);
-      }
-
-      bcrypt.hash(user.password, salt, null, (err, hash) => {
-        if (err) {
-          return reject(err);
-        }
-
-        user.password = hash;
-        resolve();
-      });
-    });
-  });
+  return Promise.resolve();
 });
 
 /**
@@ -60,6 +41,25 @@ userSchema.pre('save', function preSave() {
 userSchema.methods.comparePassword = function comparePassword(candidatePassword, cb) {
   bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
     cb(err, isMatch);
+  });
+};
+
+userSchema.methods.updatePassword = function updatePassword(newPassword) {
+  return new Promise((resolve, reject) => {
+    bcrypt.genSalt(10, (err, salt) => {
+      if (err) {
+        return reject(err);
+      }
+
+      bcrypt.hash(newPassword, salt, null, (err, hash) => {
+        if (err) {
+          return reject(err);
+        }
+
+        this.password = hash;
+        resolve();
+      });
+    });
   });
 };
 

@@ -13,8 +13,6 @@ describe('endpoint authentication', () => {
 
     it('accepts /forgot', () => request(app).post('/forgot').expect(isAuthorided));
 
-    it('accepts /signup', () => request(app).post('/signup').expect(isAuthorided));
-
     it('accepts /reset/:token', () => request(app).post('/reset/123').expect(isAuthorided));
   });
 });

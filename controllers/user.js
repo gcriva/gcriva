@@ -22,7 +22,7 @@ exports.postLogin = (req, res) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    return res.status(422).json({ success: false, message: errors[0] });
+    return res.error(422, errors[0]);
   }
 
   User.findOne({ email: req.body.email })
@@ -76,7 +76,8 @@ exports.signup = (req, res, next) => {
       return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
     }
 
-    user.save()
+    user.updatePassword(user.password)
+      .then(() => user.save())
       .then(() => {
         const token = generateUserToken(user);
 
@@ -190,10 +191,10 @@ exports.postReset = (req, res, next) => {
 
           throw new Error(`O token de redefinição de senha expirou. email: ${user.email}`);
         }
-        user.password = req.body.password;
+
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
-        return user.save();
+        return user.updatePassword(req.body.password).then(() => user.save());
       });
 
   const sendResetPasswordEmail = (user) => {
@@ -322,7 +323,15 @@ exports.updatePicture = (req, res, next) => {
     if (!result || result.error) {
       res.error(500, result.error.message);
     } else {
-      User.update(req.user.id, { picture: result.secure_url })
+      const newPicture = cloudinary.url(`${result.public_id}.png`, {
+        radius: 'max',
+        width: 200,
+        height: 200,
+        crop: 'fill',
+        gravity: 'face',
+        quality: 'auto:best'
+      }).replace('http://', 'https://');
+      User.update(req.user.id, { picture: newPicture })
         .then(user => {
           const newToken = generateUserToken(user);
 

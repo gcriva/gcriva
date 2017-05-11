@@ -35,7 +35,7 @@ describe('projects controller', () => {
       request(app)
         .post('/projects')
         .expect(422, {
-          messages: [{ msg: 'project is required', param: 'project' }]
+          message: 'project is required'
         }, done);
     });
 
@@ -60,7 +60,7 @@ describe('projects controller', () => {
       request(app)
         .put('/projects/123')
         .expect(422, {
-          messages: [{ msg: 'project is required', param: 'project' }]
+          message: 'project is required'
         }, done);
     });
 

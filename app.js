@@ -54,7 +54,9 @@ configureI18n(app);
 if (process.env.NODE_ENV !== 'test') {
   app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'short'));
 }
-app.use(cors({ origin: [process.env.CLIENT_URL, /\.gcriva\.ml$/] }));
+app.use(cors({
+  origin: process.env.NODE_ENV === 'development' ? '*' : [process.env.CLIENT_URL, /\.gcriva\.ml$/]
+}));
 app.use(responseError);
 app.use(compression());
 app.use(bodyParser.json());

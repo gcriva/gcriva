@@ -5,7 +5,7 @@
   "authFail": "Falha na autenticação. Verifique se a senha foi digitada corretamente.",
   "thisSystem": "Sistema Gcriva",
   "passwordReset": {
-    "emailSent": "Um email foi enviado para %s com as instruções de redefinição",
+    "emailSent": "Um email com as instruções foi enviado para %s",
     "success": "Senha alterada com sucesso",
     "expiredToken": "O token de redefinição de senha expirou",
     "confirmationHeader": "A sua senha no Sistema Gcriva foi alterada",
