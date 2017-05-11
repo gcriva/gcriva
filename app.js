@@ -58,7 +58,7 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Accept, Accept-Language, Content-Language, Content-Type');
   const { origin } = req.headers;
 
-  if (/\.gcriva\.ml$/.test(origin) || /\.gcriva\.netlify\.com$/.test(origin)) {
+  if (/\.gcriva\.ml$/.test(origin) || /gcriva\.netlify\.com$/.test(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
 
