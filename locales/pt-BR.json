@@ -19,5 +19,6 @@
   "greeting": "Olá %s",
 
   "project": "Projeto",
-  "beneficiary": "Beneficiário"
+  "beneficiary": "Beneficiário",
+  "user": "Usuário"
 }
