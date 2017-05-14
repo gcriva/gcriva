@@ -92,33 +92,26 @@ exports.signup = (req, res, next) => {
  * Update profile information.
  */
 exports.postUpdateProfile = (req, res, next) => {
-  req.assert('email', 'Please enter a valid email address.').isEmail();
-  req.sanitize('email').normalizeEmail({ remove_dots: false });
+  req.assert('user.email', res.t('invalid.email')).isEmail();
+  req.sanitize('user.email').normalizeEmail({ remove_dots: false });
 
   const errors = req.validationErrors();
 
   if (errors) {
-    return res.status(422).json({ success: false, messages: errors });
+    return res.error(422, errors);
   }
+  const user = pick(['name', 'email'], req.body.user);
 
-  User.get(req.user.id, (err, user) => {
-    if (err) { return next(err); }
-    user.email = req.body.email || '';
-    user.name = req.body.name || '';
-    user.gender = req.body.gender || '';
-    user.profile.location = req.body.location || '';
-    user.profile.website = req.body.website || '';
-    user.save((err) => {
-      if (err) {
-        if (err.code === 11000) {
-          req.flash('errors', { msg: 'The email address you have entered is already associated with an account.' });
-          return res.redirect('/account');
-        }
-        return next(err);
-      }
-      req.flash('success', { msg: 'Profile information has been updated.' });
-      res.redirect('/account');
-    });
+  User.findOne({ email: user.email }, (err, existingUser) => {
+    if (existingUser && existingUser.entityKey.id !== req.user.id) {
+      return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
+    }
+
+    User.update(req.user.id, user)
+      .then(updatedUser => {
+        res.json({ user: updatedUser.plain(), token: generateUserToken(updatedUser) });
+      })
+      .catch(next);
   });
 };
 
@@ -134,14 +127,15 @@ exports.postUpdatePassword = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    return res.status(422).json({ success: false, messages: errors });
+    return res.error(422, errors);
   }
 
   User.get(req.user.id)
     .then(user => {
       user.comparePassword(req.body.currentPassword, (err, isMatch) => {
         if (isMatch && !err) {
-          user.save()
+          user.updatePassword(req.body.password)
+            .then(() => user.save())
             .then(() => res.json({ message: res.t('passwordReset.success') }))
             .catch(next);
         } else {
