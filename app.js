@@ -55,23 +55,22 @@ if (process.env.NODE_ENV !== 'test') {
 }
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Accept, Accept-Language, Content-Language, Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Accept, Accept-Language, Content-Language, Content-Type, Authorization');
   const { origin } = req.headers;
 
-  if (/gcriva\.ml$/.test(origin) || /gcriva\.netlify\.com$/.test(origin)) {
+  if ((/gcriva\.ml$/.test(origin) || /gcriva\.netlify\.com$/.test(origin)) || process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
 
   if (req.method === 'OPTIONS') {
-    res.send(204);
+    res.sendStatus(204);
   } else {
     next();
   }
 });
-app.use(responseError);
 app.use(compression());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(responseError);
 app.use(expressValidator());
 app.use(passport.initialize());
 app.use(lusca.xframe('SAMEORIGIN'));
@@ -87,6 +86,7 @@ app.post('/login', userController.postLogin);
 app.post('/forgot', userController.postForgot);
 app.post('/reset/:token', userController.postReset);
 app.post('/signup', authentication.authorizeAdmin, userController.signup);
+app.post('/account', userController.postUpdateProfile);
 app.post('/account/password', userController.postUpdatePassword);
 app.post('/account/image', multer().single('picture'), userController.updatePicture);
 app.post('/users/delete', authentication.authorizeAdmin, userController.delete);
