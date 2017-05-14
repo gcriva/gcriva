@@ -71,7 +71,6 @@ passport.use(new GoogleStrategy({
           user.google = profile.id;
           user.tokens.push({ kind: 'google', accessToken });
           user.name = user.name || profile.displayName;
-          user.gender = user.gender || profile._json.gender;
           user.picture = user.picture || profile._json.image.url;
           user.save((err) => {
             req.flash('info', { msg: 'Google account has been linked.' });
@@ -97,7 +96,6 @@ passport.use(new GoogleStrategy({
           user.google = profile.id;
           user.tokens.push({ kind: 'google', accessToken });
           user.profile.name = profile.displayName;
-          user.profile.gender = profile._json.gender;
           user.profile.picture = profile._json.image.url;
           user.save((err) => {
             done(err, user);

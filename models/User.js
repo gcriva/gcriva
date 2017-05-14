@@ -10,7 +10,6 @@ const userSchema = new gstore.Schema({
   passwordResetExpires: 'datetime',
   name: { type: 'string', required: true },
   picture: 'string',
-  gender: 'string',
   roles: { type: 'array', required: true },
 
   google: 'string',

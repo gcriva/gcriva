@@ -17,6 +17,9 @@
     "ending": "Atenciosamente"
   },
   "greeting": "Olá %s",
+  "invalid": {
+    "email": "Favor digitar um email válido"
+  },
 
   "project": "Projeto",
   "beneficiary": "Beneficiário",
