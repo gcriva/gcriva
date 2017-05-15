@@ -10,6 +10,16 @@ const stream = require('stream');
 const User = require('../models/User');
 const locals = require('../config/locals');
 
+exports.index = (req, res, next) => {
+  User.list()
+    .then(response => {
+      res.json({
+        users: response.entities
+      });
+    })
+    .catch(next);
+};
+
 /**
  * POST /login
  * Sign in using email and password.

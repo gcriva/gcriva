@@ -28,7 +28,7 @@ const responseError = require('./utils/responseError');
  * Controllers (route handlers).
  */
 const homeController = require('./controllers/home');
-const userController = require('./controllers/user');
+const usersController = require('./controllers/users');
 const beneficiariesController = require('./controllers/beneficiaries');
 const projectsController = require('./controllers/projects');
 const eventsController = require('./controllers/events');
@@ -82,14 +82,15 @@ app.use(authentication.authenticate);
  * Primary app routes.
  */
 app.get('/', homeController.index);
-app.post('/login', userController.postLogin);
-app.post('/forgot', userController.postForgot);
-app.post('/reset/:token', userController.postReset);
-app.post('/signup', authentication.authorizeAdmin, userController.signup);
-app.post('/account', userController.postUpdateProfile);
-app.post('/account/password', userController.postUpdatePassword);
-app.post('/account/image', multer().single('picture'), userController.updatePicture);
-app.post('/users/delete', authentication.authorizeAdmin, userController.delete);
+app.post('/login', usersController.postLogin);
+app.post('/forgot', usersController.postForgot);
+app.post('/reset/:token', usersController.postReset);
+app.post('/signup', authentication.authorizeAdmin, usersController.signup);
+app.post('/account', usersController.postUpdateProfile);
+app.post('/account/password', usersController.postUpdatePassword);
+app.post('/account/image', multer().single('picture'), usersController.updatePicture);
+app.get('/users', authentication.authorizeAdmin, usersController.index);
+app.post('/users/delete', authentication.authorizeAdmin, usersController.delete);
 app.get('/beneficiaries', beneficiariesController.index);
 app.post('/beneficiaries', beneficiariesController.create);
 app.delete('/beneficiaries/:id', beneficiariesController.delete);
