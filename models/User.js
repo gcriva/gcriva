@@ -2,6 +2,7 @@
 
 const bcrypt = require('bcrypt-nodejs');
 const gstore = require('gstore-node');
+const { auditDelete, auditSave } = require('./hooks');
 
 const userSchema = new gstore.Schema({
   email: { type: 'string', validate: 'isEmail', required: true },
@@ -33,6 +34,8 @@ userSchema.pre('save', function preSave() {
 
   return Promise.resolve();
 });
+userSchema.post('delete', auditDelete);
+userSchema.pre('save', auditSave);
 
 /**
  * Helper method for validating user's password.
