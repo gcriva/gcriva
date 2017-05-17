@@ -90,7 +90,7 @@ app.post('/account', usersController.postUpdateProfile);
 app.post('/account/password', usersController.postUpdatePassword);
 app.post('/account/image', multer().single('picture'), usersController.updatePicture);
 app.get('/users', authentication.authorizeAdmin, usersController.index);
-app.post('/users/delete', authentication.authorizeAdmin, usersController.delete);
+app.delete('/users/delete', authentication.authorizeAdmin, usersController.delete);
 app.get('/beneficiaries', beneficiariesController.index);
 app.post('/beneficiaries', beneficiariesController.create);
 app.delete('/beneficiaries/:id', beneficiariesController.delete);
