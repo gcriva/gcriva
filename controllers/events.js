@@ -1,10 +1,12 @@
 'use strict';
 
-const Events = require('../models/Event');
+const Event = require('../models/Event');
 const { pick } = require('ramda');
 
+const eventParams = pick(['name', 'startDate', 'endDate', 'description', 'beneficiaries']);
+
 exports.index = (req, res, next) => {
-  Events.list()
+  Event.list()
     .then(response => {
       res.json({
         event: response.entities
@@ -14,28 +16,25 @@ exports.index = (req, res, next) => {
 };
 
 exports.create = (req, res, next) => {
-  const event = new Events(pick(
-      ['name', 'dateStart', 'dateEnd', 'description'],
-      req.body.event
-    ));
+  const event = new Event(eventParams(req.body.event));
   event.save()
-  .then(() => {
-    res.json({ event: event.plain() });
-  })
-  .catch(next);
+    .then(() => {
+      res.json({ event: event.plain() });
+    })
+    .catch(next);
 };
 
 exports.update = (req, res, next) => {
-  const event = pick(['name', 'dateStart', 'dateEnd', 'description'], req.body.event);
-  Events.update(req.params.id, event)
-  .then((updatedEvent) => {
-    res.json({ event: updatedEvent.plain() });
-  })
-  .catch(next);
+  const event = eventParams(req.body.event);
+  Event.update(req.params.id, event)
+    .then((updatedEvent) => {
+      res.json({ event: updatedEvent.plain() });
+    })
+    .catch(next);
 };
 
 exports.delete = (req, res, next) => {
-  Events.delete(req.params.id)
+  Event.delete(req.params.id)
   .then((response) => {
     if (response.success) {
       res.json({ key: response.key });

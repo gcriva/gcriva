@@ -3,12 +3,21 @@
 const { pick } = require('ramda');
 const Project = require('../models/Project');
 
-const projectParams = pick(['name', 'startDate', 'endDate', 'sponsorName']);
+const projectParams = pick(['name', 'startDate', 'endDate', 'sponsorName', 'beneficiaries']);
 
 exports.index = (req, res, next) => {
   Project.list()
     .then(response => {
       res.json({ projects: response.entities });
+    })
+    .catch(next);
+};
+
+exports.show = (req, res, next) => {
+  console.log(req.params);
+  Project.get(req.params.id)
+    .then(project => {
+      res.json({ project: project.plain() });
     })
     .catch(next);
 };

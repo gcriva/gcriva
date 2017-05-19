@@ -21,13 +21,30 @@ describe('projects controller', () => {
           .get('/projects')
           .expect(200)
       ))
+      .then(res => res.body)
       .should.eventually.containSubset({
-        body: {
-          projects: [
-            { name: 'name', startDate: '2017-05-04' }
-          ]
-        }
+        projects: [
+          { name: 'name', startDate: '2017-05-04' }
+        ]
       })
+  ));
+
+  it('/show: shows the project', () => (
+    new Project({ name: 'name', startDate: '2017-05-04' }).save()
+      .then(project => (
+        request(app)
+          .get(`/projects/${project.entityKey.id}`)
+          .expect(200)
+          .then(res => res.body)
+          .should.eventually.containSubset({
+            project: { name: 'name', startDate: '2017-05-04' }
+          })
+      ))
+  ));
+  it('/show: returns 404 when project was not found', () => (
+      request(app)
+        .get('/projects/something')
+        .expect(404)
   ));
 
   describe('/create', () => {
@@ -82,8 +99,9 @@ describe('projects controller', () => {
           .send({ project })
           .expect(200)
         ))
+        .then(res => res.body)
         .should.eventually.containSubset({
-          body: { project: { name: 'anotherName' } }
+          project: { name: 'anotherName' }
         })
         .then(() => (
           Project.get(subject.entityKey.id).should.eventually.containSubset({

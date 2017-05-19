@@ -5,19 +5,14 @@ const { auditDelete, auditSave, setUpdatedAt } = require('./hooks');
 
 const eventsSchema = new gstore.Schema({
   name: { type: 'string', required: true },
-  dateStart: { type: 'datetime', required: true },
-  dateEnd: { type: 'datetime' },
+  startDate: { type: 'datetime', required: true },
+  endDate: { type: 'datetime' },
   description: 'string',
+  beneficiaries: 'array',
+
   createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
   updatedAt: { type: 'datetime' }
 
-});
-
-eventsSchema.pre('save', function preSave() {
-  const user = this;
-
-  user.updatedAt = new Date();
-  return Promise.resolve();
 });
 
 eventsSchema.pre('save', setUpdatedAt);

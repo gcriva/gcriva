@@ -8,6 +8,7 @@ const projectSchema = new gstore.Schema({
   startDate: { type: 'datetime', validate: 'isISO8601', required: true },
   endDate: { type: 'datetime', validate: 'isISO8601' },
   sponsorName: 'string',
+  beneficiaries: 'array',
 
   createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
   updatedAt: { type: 'datetime' }

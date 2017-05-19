@@ -13,6 +13,14 @@ exports.index = (req, res, next) => {
     .catch(next);
 };
 
+exports.show = (req, res, next) => {
+  Beneficiary.get(req.paranms.id)
+    .then(beneficiary => {
+      res.json({ beneficiary: beneficiary.plain() });
+    })
+    .catch(next);
+};
+
 exports.create = (req, res, next) => {
   const beneficiary = new Beneficiary(pick(
       ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
