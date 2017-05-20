@@ -24,10 +24,9 @@ exports.index = (req, res, next) => {
  * POST /login
  * Sign in using email and password.
  */
-exports.postLogin = (req, res) => {
+exports.postLogin = (req, res, next) => {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password cannot be blank').notEmpty();
-  req.sanitize('email').normalizeEmail({ remove_dots: false });
 
   const errors = req.validationErrors();
 
@@ -47,7 +46,7 @@ exports.postLogin = (req, res) => {
         }
       });
     })
-    .catch(() => res.status(404).json({ success: false, message: 'Usuário não encontrado' }));
+    .catch(next);
 };
 
 function generateUserToken(user) {
