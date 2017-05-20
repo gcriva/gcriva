@@ -9,7 +9,9 @@ module.exports = function responseErrorMiddleware(req, res, next) {
     if (is(Array, message)) {
       response = { message: message[0].msg ? message[0].msg : message };
     } else if (is(Object, message)) {
-      response = message.msg ? { message: message.msg } : message.message || message;
+      const messageObj = is(Object, message.message) ? message.message : message;
+
+      response = message.msg ? { message: message.msg } : messageObj;
     } else {
       response = { message };
     }
