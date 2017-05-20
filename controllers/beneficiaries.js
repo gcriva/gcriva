@@ -3,6 +3,20 @@
 const Beneficiary = require('../models/Beneficiary');
 const { pick } = require('ramda');
 
+const beneficiaryParams = pick([
+  'name',
+  'childName',
+  'birthDate',
+  'grade',
+  'street',
+  'city',
+  'state',
+  'motherName',
+  'fatherName',
+  'guardianName',
+  'phoneNumbers'
+]);
+
 exports.index = (req, res, next) => {
   Beneficiary.list()
     .then(response => {
@@ -22,27 +36,23 @@ exports.show = (req, res, next) => {
 };
 
 exports.create = (req, res, next) => {
-  const beneficiary = new Beneficiary(pick(
-      ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
-      req.body.beneficiary
-    ));
+  const beneficiary = new Beneficiary(beneficiaryParams(req.body.beneficiary));
+
   beneficiary.save()
-  .then(() => {
-    res.json({ beneficiary: beneficiary.plain() });
-  })
-  .catch(next);
+    .then(() => {
+      res.json({ beneficiary: beneficiary.plain() });
+    })
+    .catch(next);
 };
 
 exports.update = (req, res, next) => {
-  const beneficiary = pick(
-    ['name', 'childName', 'birthDate', 'grade', 'street', 'city', 'state', 'motherName', 'fatherName', 'guardianName'],
-    req.body.beneficiary
-  );
+  const beneficiary = pick(beneficiaryParams(req.body.beneficiary));
+
   Beneficiary.update(req.params.id, beneficiary)
-  .then((updatedBeneficiary) => {
-    res.json({ beneficiary: updatedBeneficiary.plain() });
-  })
-  .catch(next);
+    .then((updatedBeneficiary) => {
+      res.json({ beneficiary: updatedBeneficiary.plain() });
+    })
+    .catch(next);
 };
 
 exports.delete = (req, res, next) => {

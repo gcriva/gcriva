@@ -15,6 +15,8 @@ const beneficiarySchema = new gstore.Schema({
   motherName: 'string',
   fatherName: 'string',
   guardianName: 'string',
+  phoneNumbers: 'array',
+
   createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
   updatedAt: { type: 'datetime' }
 });
