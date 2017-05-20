@@ -65,15 +65,14 @@ function generateUserToken(user) {
  * Create a new local account.
  */
 exports.signup = (req, res, next) => {
-  req.assert('email', 'Email is not valid').isEmail();
-  req.assert('password', 'Password must be at least 4 characters long').len(4);
-  req.assert('confirmPassword', 'Passwords do not match').equals(req.body.password);
-  req.sanitize('email').normalizeEmail({ remove_dots: false });
+  req.checkBody('email', 'Email is not valid').isEmail();
+  req.checkBody('password', 'Password must be at least 4 characters long').len(4);
+  req.checkBody('confirmPassword', 'Passwords do not match').equals(req.body.password);
+  req.sanitize('email').normalizeEmail({ remove_dots: false, gmail_remove_dots: false });
 
   const errors = req.validationErrors();
-
   if (errors) {
-    return res.status(422).json({ success: false, messages: errors });
+    return res.error(422, errors);
   }
 
   const user = new User(pick(
