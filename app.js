@@ -56,11 +56,8 @@ if (process.env.NODE_ENV !== 'test') {
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Accept, Accept-Language, Content-Language, Content-Type, Authorization');
-  const { origin } = req.headers;
 
-  if ((/gcriva\.ml$/.test(origin) || /gcriva\.netlify\.com$/.test(origin)) || process.env.NODE_ENV === 'development') {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (req.method === 'OPTIONS') {
     res.sendStatus(204);
