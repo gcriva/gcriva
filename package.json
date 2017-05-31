@@ -11,6 +11,9 @@
     "email": "wagnermecsantos@gmail.com",
     "url": "https://github.com/wagoid"
   },
+  "engines": {
+    "node": "6.9.1"
+  },
   "license": "MIT",
   "scripts": {
     "start": "nodemon server.js",
