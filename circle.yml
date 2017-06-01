@@ -23,9 +23,3 @@ test:
     - sleep 10 # make sure the Datastore emulator is ready
   override:
     - npm run validate
-
-deployment:
-  production:
-    branch: master
-    heroku:
-      appname: gcriva
