@@ -14,7 +14,6 @@ exports.index = (req, res, next) => {
 };
 
 exports.show = (req, res, next) => {
-  console.log(req.params);
   Project.get(req.params.id)
     .then(project => {
       res.json({ project: project.plain() });

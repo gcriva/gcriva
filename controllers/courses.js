@@ -9,8 +9,16 @@ exports.index = (req, res, next) => {
   Course.list()
     .then(response => {
       res.json({
-        course: response.entities
+        courses: response.entities
       });
+    })
+    .catch(next);
+};
+
+exports.show = (req, res, next) => {
+  Course.get(req.params.id)
+    .then(course => {
+      res.json({ course: course.plain() });
     })
     .catch(next);
 };
@@ -53,7 +61,7 @@ exports.delete = (req, res, next) => {
   Course.delete(req.params.id)
     .then((response) => {
       if (response.success) {
-        res.json({ key: response.key });
+        res.json({ id: response.key.id });
       } else {
         res.error(404, 'Curso não foi encontrado');
       }

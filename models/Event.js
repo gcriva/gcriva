@@ -19,6 +19,6 @@ eventsSchema.pre('save', setUpdatedAt);
 eventsSchema.post('delete', auditDelete);
 eventsSchema.pre('save', auditSave);
 
-const Events = gstore.model('Event', eventsSchema);
+const Event = gstore.model('Event', eventsSchema);
 
-module.exports = Events;
+module.exports = Event;
