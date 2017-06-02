@@ -28,7 +28,7 @@ exports.index = (req, res, next) => {
 };
 
 exports.show = (req, res, next) => {
-  Beneficiary.get(req.paranms.id)
+  Beneficiary.get(req.params.id)
     .then(beneficiary => {
       res.json({ beneficiary: beneficiary.plain() });
     })
