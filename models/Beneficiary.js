@@ -21,13 +21,6 @@ const beneficiarySchema = new gstore.Schema({
   updatedAt: { type: 'datetime' }
 });
 
-beneficiarySchema.pre('save', function preSave() {
-  const user = this;
-
-  user.updatedAt = new Date();
-  return Promise.resolve();
-});
-
 beneficiarySchema.pre('save', setUpdatedAt);
 beneficiarySchema.post('delete', auditDelete);
 beneficiarySchema.pre('save', auditSave);

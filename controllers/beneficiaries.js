@@ -3,7 +3,7 @@
 const Beneficiary = require('../models/Beneficiary');
 const { pick } = require('ramda');
 
-const beneficiaryParams = pick([
+const pickBeneficiaryParams = pick([
   'name',
   'childName',
   'birthDate',
@@ -36,7 +36,7 @@ exports.show = (req, res, next) => {
 };
 
 exports.create = (req, res, next) => {
-  const beneficiary = new Beneficiary(beneficiaryParams(req.body.beneficiary));
+  const beneficiary = new Beneficiary(pickBeneficiaryParams(req.body.beneficiary));
 
   beneficiary.save()
     .then(() => {
@@ -46,7 +46,7 @@ exports.create = (req, res, next) => {
 };
 
 exports.update = (req, res, next) => {
-  const beneficiary = pick(beneficiaryParams(req.body.beneficiary));
+  const beneficiary = pickBeneficiaryParams(req.body.beneficiary);
 
   Beneficiary.update(req.params.id, beneficiary)
     .then((updatedBeneficiary) => {
