@@ -12,7 +12,7 @@
     "url": "https://github.com/wagoid"
   },
   "engines": {
-    "node": "8.2.1"
+    "node": "8.1.4"
   },
   "license": "MIT",
   "scripts": {
