@@ -13,12 +13,12 @@ const jwtOptions = {
 };
 
 passport.serializeUser((user, done) => {
-  done(null, user.plain().id);
+  done(null, user.toObject().id);
 });
 
 passport.deserializeUser((id, done) => {
-  User.get(id)
-    .then(user => done(null, user.plain()))
+  User.findbyId(id).lean().exect()
+    .then(user => done(null, user))
     .catch(done);
 });
 

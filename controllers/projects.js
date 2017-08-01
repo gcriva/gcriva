@@ -1,68 +1,48 @@
 'use strict';
 
-const { pick } = require('ramda');
+const { pick, forEachObjIndexed } = require('ramda');
 const Project = require('../models/Project');
 
 const projectParams = pick(['name', 'startDate', 'endDate', 'sponsorName', 'beneficiaries']);
 
-exports.index = (req, res, next) => {
-  Project.list()
-    .then(response => {
-      res.json({ projects: response.entities });
-    })
-    .catch(next);
+exports.index = async (req, res) => {
+  const projects = await Project.find().lean().exec();
+
+  res.json({ projects });
 };
 
-exports.show = (req, res, next) => {
-  Project.get(req.params.id)
-    .then(project => {
-      res.json({ project: project.plain() });
-    })
-    .catch(next);
+exports.show = async (req, res) => {
+  const project = await Project.findById(req.params.id).lean().exec();
+
+  res.json({ project });
 };
 
-exports.create = (req, res, next) => {
+exports.create = async (req, res) => {
   req.checkBody('project', 'project is required').notEmpty();
-
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
-  }
+  const errors = await req.getValidationResult();
+  errors.throw();
 
   const project = new Project(projectParams(req.body.project));
 
-  project.save()
-    .then(() => {
-      res.json({ project: project.plain() });
-    })
-    .catch(next);
+  await project.save();
+  res.json({ project: project.toObject() });
 };
 
-exports.update = (req, res, next) => {
+exports.update = async (req, res) => {
   req.checkBody('project', 'project is required').notEmpty();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
-  }
-
-  Project.update(req.params.id, projectParams(req.body.project))
-    .then(project => {
-      res.json({ project: project.plain() });
-    })
-    .catch(next);
+  const project = await Project.findById(req.params.id);
+  forEachObjIndexed((value, key) => {
+    project[key] = value;
+  }, projectParams(req.body.project));
+  await project.save();
+  res.json({ project: project.toObject() });
 };
 
-exports.delete = (req, res, next) => {
-  Project.delete(req.params.id)
-    .then(response => {
-      if (!response.success) {
-        res.error(404, res.t('notFound', res.t('project')));
-      } else {
-        res.json({ id: response.key.id });
-      }
-    })
-    .catch(next);
+exports.delete = async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  await project.remove();
+  res.json({ id: project._id });
 };

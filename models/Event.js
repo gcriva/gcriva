@@ -1,24 +1,18 @@
 'use strict';
 
-const gstore = require('gstore-node');
-const { auditDelete, auditSave, setUpdatedAt } = require('./hooks');
+const { hooksPlugin } = require('./hooks');
+const mongoose = require('mongoose');
+const { isISO8601 } = require('./validations');
 
-const eventsSchema = new gstore.Schema({
-  name: { type: 'string', required: true },
-  startDate: { type: 'datetime', required: true },
-  endDate: { type: 'datetime' },
-  description: 'string',
-  beneficiaries: 'array',
+const eventSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  startDate: { type: Date, validate: isISO8601, required: true },
+  endDate: { type: Date },
+  description: String,
+  beneficiaries: Array,
+}, { timestamps: true });
 
-  createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
-  updatedAt: { type: 'datetime' }
-
-});
-
-eventsSchema.pre('save', setUpdatedAt);
-eventsSchema.post('delete', auditDelete);
-eventsSchema.pre('save', auditSave);
-
-const Event = gstore.model('Event', eventsSchema);
+eventSchema.plugin(hooksPlugin);
+const Event = mongoose.model('Event', eventSchema);
 
 module.exports = Event;

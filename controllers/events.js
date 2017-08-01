@@ -1,68 +1,47 @@
 'use strict';
 
 const Event = require('../models/Event');
-const { pick } = require('ramda');
+const { pick, forEachObjIndexed } = require('ramda');
 
 const eventParams = pick(['name', 'startDate', 'endDate', 'description', 'beneficiaries']);
 
-exports.index = (req, res, next) => {
-  Event.list()
-    .then(response => {
-      res.json({
-        events: response.entities
-      });
-    })
-    .catch(next);
+exports.index = async (req, res) => {
+  const events = await Event.find().lean().exec();
+
+  res.json({ events });
 };
 
-exports.show = (req, res, next) => {
-  Event.get(req.params.id)
-    .then(event => {
-      res.json({ event: event.plain() });
-    })
-    .catch(next);
+exports.show = async (req, res) => {
+  const event = await Event.findById(req.params.id).lean().exec();
+
+  res.json({ event });
 };
 
-exports.create = (req, res, next) => {
+exports.create = async (req, res) => {
   req.checkBody('event', 'event is required').notEmpty();
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
-  }
+  const errors = await req.getValidationResult();
+  errors.throw();
 
   const event = new Event(eventParams(req.body.event));
-  event.save()
-    .then(() => {
-      res.json({ event: event.plain() });
-    })
-    .catch(next);
+  await event.save();
+  res.json({ event });
 };
 
-exports.update = (req, res, next) => {
+exports.update = async (req, res) => {
   req.checkBody('event', 'event is required').notEmpty();
-  const errors = req.validationErrors();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  if (errors) {
-    return res.error(422, errors);
-  }
-
-  const event = eventParams(req.body.event);
-  Event.update(req.params.id, event)
-    .then((updatedEvent) => {
-      res.json({ event: updatedEvent.plain() });
-    })
-    .catch(next);
+  const event = await Event.findById(req.params.id);
+  forEachObjIndexed((value, key) => {
+    event[key] = value;
+  }, eventParams(req.body.event));
+  await event.save();
+  res.json({ event });
 };
 
-exports.delete = (req, res, next) => {
-  Event.delete(req.params.id)
-    .then((response) => {
-      if (response.success) {
-        res.json({ id: response.key.id });
-      } else {
-        res.error(404, 'Evento não foi encontrado');
-      }
-    })
-    .catch(next);
+exports.delete = async (req, res) => {
+  const event = await Event.findById(req.params.id);
+  await event.remove();
+  res.json({ id: event._id });
 };

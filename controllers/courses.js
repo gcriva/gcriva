@@ -1,70 +1,45 @@
 'use strict';
 
 const Course = require('../models/Course');
-const { pick } = require('ramda');
+const { forEachObjIndexed } = require('ramda');
 
-const courseParams = pick(['name', 'startDate', 'endDate', 'place', 'description', 'beneficiaries']);
-
-exports.index = (req, res, next) => {
-  Course.list()
-    .then(response => {
-      res.json({
-        courses: response.entities
-      });
-    })
-    .catch(next);
+exports.index = async (req, res) => {
+  const courses = await Course.find().lean().exec();
+  res.json({ courses });
 };
 
-exports.show = (req, res, next) => {
-  Course.get(req.params.id)
-    .then(course => {
-      res.json({ course: course.plain() });
-    })
-    .catch(next);
+exports.show = async (req, res) => {
+  const course = await Course.findById(req.params.id).lean().exec();
+
+  res.json({ course });
 };
 
-exports.create = (req, res, next) => {
+exports.create = async (req, res) => {
   req.checkBody('course', 'course is required').notEmpty();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
-  }
-
-  const course = new Course(courseParams(req.body.course));
-  course.save()
-    .then(() => {
-      res.json({ course: course.plain() });
-    })
-    .catch(next);
+  const course = new Course(req.body.course);
+  await course.save();
+  res.json({ course: course.toObject() });
 };
 
-exports.update = (req, res, next) => {
+exports.update = async (req, res) => {
   req.checkBody('course', 'course is required').notEmpty();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
-  }
-
-  const course = courseParams(req.body.course);
-  Course.update(req.params.id, course)
-    .then((updatedCourse) => {
-      res.json({ course: updatedCourse.plain() });
-    })
-    .catch(next);
+  const course = await Course.findById(req.params.id);
+  forEachObjIndexed((value, key) => {
+    course[key] = value;
+  }, req.body.course);
+  await course.save();
+  res.json({ course });
 };
 
-exports.delete = (req, res, next) => {
-  Course.delete(req.params.id)
-    .then((response) => {
-      if (response.success) {
-        res.json({ id: response.key.id });
-      } else {
-        res.error(404, 'Curso não foi encontrado');
-      }
-    })
-    .catch(next);
+exports.delete = async (req, res) => {
+  const course = await Course.findById(req.params.id);
+  await course.remove();
+
+  res.json({ id: course._id });
 };

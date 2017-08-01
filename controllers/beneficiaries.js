@@ -1,68 +1,46 @@
 'use strict';
 
 const Beneficiary = require('../models/Beneficiary');
-const { pick } = require('ramda');
+const { forEachObjIndexed } = require('ramda');
 
-const pickBeneficiaryParams = pick([
-  'name',
-  'childName',
-  'birthDate',
-  'grade',
-  'street',
-  'city',
-  'state',
-  'motherName',
-  'fatherName',
-  'guardianName',
-  'phoneNumbers'
-]);
+exports.index = async (req, res) => {
+  const beneficiaries = await Beneficiary.find().lean().exec();
 
-exports.index = (req, res, next) => {
-  Beneficiary.list()
-    .then(response => {
-      res.json({
-        beneficiaries: response.entities
-      });
-    })
-    .catch(next);
+  res.json({ beneficiaries });
 };
 
-exports.show = (req, res, next) => {
-  Beneficiary.get(req.params.id)
-    .then(beneficiary => {
-      res.json({ beneficiary: beneficiary.plain() });
-    })
-    .catch(next);
+exports.show = async (req, res) => {
+  const beneficiary = await Beneficiary.findById(req.params.id).lean().exec();
+
+  res.json({ beneficiary });
 };
 
-exports.create = (req, res, next) => {
-  const beneficiary = new Beneficiary(pickBeneficiaryParams(req.body.beneficiary));
+exports.create = async (req, res) => {
+  req.checkBody('beneficiary', 'beneficiary is required').notEmpty();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  beneficiary.save()
-    .then(() => {
-      res.json({ beneficiary: beneficiary.plain() });
-    })
-    .catch(next);
+  const beneficiary = new Beneficiary(req.body.beneficiary);
+  await beneficiary.save();
+  res.json({ course: beneficiary.toObject() });
 };
 
-exports.update = (req, res, next) => {
-  const beneficiary = pickBeneficiaryParams(req.body.beneficiary);
+exports.update = async (req, res) => {
+  req.checkBody('beneficiary', 'beneficiary is required').notEmpty();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  Beneficiary.update(req.params.id, beneficiary)
-    .then((updatedBeneficiary) => {
-      res.json({ beneficiary: updatedBeneficiary.plain() });
-    })
-    .catch(next);
+  const beneficiary = await Beneficiary.findById(req.params.id);
+  forEachObjIndexed((value, key) => {
+    beneficiary[key] = value;
+  }, req.body.beneficiary);
+  await beneficiary.save();
+  res.json({ beneficiary });
 };
 
-exports.delete = (req, res, next) => {
-  Beneficiary.delete(req.params.id)
-    .then((response) => {
-      if (response.success) {
-        res.json({ id: response.key.id });
-      } else {
-        res.error(404, res.t('notFound', res.t('beneficiary')));
-      }
-    })
-    .catch(next);
+exports.delete = async (req, res) => {
+  const beneficiary = await Beneficiary.findById(req.params.id);
+  await beneficiary.remove();
+
+  res.json({ id: beneficiary._id });
 };

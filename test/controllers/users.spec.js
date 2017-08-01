@@ -6,9 +6,9 @@ const User = require('../../models/User');
 describe('users controller', () => {
   let app;
 
-  before(() => User.deleteAll());
+  before(() => User.remove({}));
 
-  afterEach(() => User.deleteAll());
+  afterEach(() => User.remove({}));
 
   beforeEach(() => {
     app = require('../../app.js');

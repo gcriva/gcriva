@@ -5,17 +5,18 @@ const Event = require('../../models/Event');
 
 describe('events controller', () => {
   let app;
+  const startDate = new Date().toISOString();
 
-  before(() => Event.deleteAll());
+  before(() => Event.remove({}));
 
-  afterEach(() => Event.deleteAll());
+  afterEach(() => Event.remove({}));
 
   beforeEach(() => {
     app = require('../../app.js');
   });
 
   it('/index: returns all events ', () => (
-    new Event({ name: 'name', startDate: '2017-06-01' }).save()
+    new Event({ name: 'name', startDate }).save()
       .then(() => (
         request(app)
           .get('/events')
@@ -24,26 +25,26 @@ describe('events controller', () => {
       .then(res => res.body)
       .should.eventually.containSubset({
         events: [
-          { name: 'name', startDate: '2017-06-01' }
+          { name: 'name', startDate }
         ]
       })
   ));
 
   it('/show: shows the event', () => (
-    new Event({ name: 'name', startDate: '2017-06-01' }).save()
+    new Event({ name: 'name', startDate }).save()
       .then(event => (
         request(app)
-          .get(`/events/${event.entityKey.id}`)
+          .get(`/events/${event._id}`)
           .expect(200)
           .then(res => res.body)
           .should.eventually.containSubset({
-            event: { name: 'name', startDate: '2017-06-01' }
+            event: { name: 'name', startDate }
           })
       ))
   ));
   it('/show: returns 404 when event was not found', () => (
       request(app)
-        .get('/events/something')
+        .get('/events/597fc3faaafaaaaaaaaaaaa6')
         .expect(404)
   ));
 
@@ -57,7 +58,7 @@ describe('events controller', () => {
     });
 
     it('creates a new event', done => {
-      const event = { name: 'event!', startDate: '2017-06-01' };
+      const event = { name: 'event!', startDate };
 
       request(app)
         .post('/events')
@@ -83,19 +84,19 @@ describe('events controller', () => {
 
     it('returns 404 when event was not found', () => (
       request(app)
-        .put('/events/blau')
-        .send({ event: { name: 'name', startDate: '2017-06-01' } })
+        .put('/events/597fc3faaafaaaaaaaaaaaa6')
+        .send({ event: { name: 'name', startDate } })
         .expect(404)
     ));
 
     it('updates the event and returns the updated entity', () => {
       const event = { name: 'anotherName' };
-      const subject = new Event({ name: 'name', startDate: '2017-06-01' });
+      const subject = new Event({ name: 'name', startDate });
 
       return subject.save()
         .then(() => (
           request(app)
-          .put(`/events/${subject.entityKey.id}`)
+          .put(`/events/${subject._id}`)
           .send({ event })
           .expect(200)
         ))
@@ -104,7 +105,7 @@ describe('events controller', () => {
           event: { name: 'anotherName' }
         })
         .then(() => (
-          Event.get(subject.entityKey.id).should.eventually.containSubset({
+          Event.findById(subject._id).should.eventually.containSubset({
             name: 'anotherName'
           })
         ));
@@ -114,20 +115,20 @@ describe('events controller', () => {
   describe('/delete', () => {
     it('returns 404 if event was not found', () => (
       request(app)
-        .delete('/events/blau')
+        .delete('/events/597fc3faaafaaaaaaaaaaaa6')
         .expect(404)
     ));
 
     it('returns the deleted key', () => {
-      const event = new Event({ name: 'someNadsdme', startDate: '2017-06-01' });
+      const event = new Event({ name: 'someNadsdme', startDate });
 
       return event.save()
         .then(() => (
-          request(app).delete(`/events/${event.entityKey.id}`).expect(200)
+          request(app).delete(`/events/${event._id}`).expect(200)
         ))
         .then(res => (
           res.body.should.containSubset({
-            id: Number.parseInt(event.entityKey.id, 10)
+            id: event._id.toString()
           })
         ));
     });

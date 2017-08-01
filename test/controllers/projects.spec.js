@@ -5,45 +5,34 @@ const Project = require('../../models/Project');
 
 describe('projects controller', () => {
   let app;
+  const startDate = new Date().toISOString();
 
-  before(() => Project.deleteAll());
+  before(() => Project.remove({}));
 
-  afterEach(() => Project.deleteAll());
+  afterEach(() => Project.remove({}));
 
   beforeEach(() => {
     app = require('../../app.js');
   });
 
-  it('/index: returns all the projects ', () => (
-    new Project({ name: 'name', startDate: '2017-05-04' }).save()
-      .then(() => (
-        request(app)
-          .get('/projects')
-          .expect(200)
-      ))
-      .then(res => res.body)
-      .should.eventually.containSubset({
-        projects: [
-          { name: 'name', startDate: '2017-05-04' }
-        ]
-      })
-  ));
 
-  it('/show: shows the project', () => (
-    new Project({ name: 'name', startDate: '2017-05-04' }).save()
-      .then(project => (
-        request(app)
-          .get(`/projects/${project.entityKey.id}`)
-          .expect(200)
-          .then(res => res.body)
-          .should.eventually.containSubset({
-            project: { name: 'name', startDate: '2017-05-04' }
-          })
-      ))
-  ));
+  it('/index: returns all the projects ', async () => {
+    await new Project({ name: 'name', startDate }).save();
+    const res = await request(app).get('/projects').expect(200);
+    res.body.projects.should.containSubset([{
+      name: 'name', startDate
+    }]);
+  });
+
+  it('/show: shows the project', async () => {
+    const project = await new Project({ name: 'name', startDate }).save();
+    const res = await request(app).get(`/projects/${project._id}`).expect(200);
+    res.body.project.should.containSubset({ name: 'name', startDate });
+  });
+
   it('/show: returns 404 when project was not found', () => (
       request(app)
-        .get('/projects/something')
+        .get('/projects/597fc3faaafaaaaaaaaaaaa6')
         .expect(404)
   ));
 
@@ -57,7 +46,7 @@ describe('projects controller', () => {
     });
 
     it('creates a new project', done => {
-      const project = { name: 'project!', startDate: '2017-05-05' };
+      const project = { name: 'project!', startDate };
 
       request(app)
         .post('/projects')
@@ -83,38 +72,28 @@ describe('projects controller', () => {
 
     it('returns 404 when project was not found', () => (
       request(app)
-        .put('/projects/blau')
+        .put('/projects/597fc3faaafaaaaaaaaaaaa6')
         .send({ project: { name: 'name', startDate: '2017-05-05' } })
         .expect(404)
     ));
 
-    it('updates the project and returns the updated entity', () => {
+    it('updates the project and returns the updated entity', async () => {
       const project = { name: 'anotherName' };
       const subject = new Project({ name: 'name', startDate: '2017-05-05' });
-
-      return subject.save()
-        .then(() => (
-          request(app)
-          .put(`/projects/${subject.entityKey.id}`)
-          .send({ project })
-          .expect(200)
-        ))
-        .then(res => res.body)
-        .should.eventually.containSubset({
-          project: { name: 'anotherName' }
-        })
-        .then(() => (
-          Project.get(subject.entityKey.id).should.eventually.containSubset({
-            name: 'anotherName'
-          })
-        ));
+      await subject.save();
+      const res = await request(app).put(`/projects/${subject._id}`).send({ project }).expect(200);
+      res.body.should.containSubset({
+        project: { name: 'anotherName' }
+      });
+      const foundProject = await Project.findById(subject._id);
+      foundProject.should.containSubset({ name: 'anotherName' });
     });
   });
 
   describe('/delete', () => {
     it('returns 404 if project was not found', () => (
       request(app)
-        .delete('/projects/blau')
+        .delete('/projects/59805892eee12f2c87d40b13')
         .expect(404)
     ));
 
@@ -123,11 +102,11 @@ describe('projects controller', () => {
 
       return project.save()
         .then(() => (
-          request(app).delete(`/projects/${project.entityKey.id}`).expect(200)
+          request(app).delete(`/projects/${project._id}`).expect(200)
         ))
         .then(res => (
           res.body.should.containSubset({
-            id: Number.parseInt(project.entityKey.id, 10)
+            id: project._id.toString()
           })
         ));
     });

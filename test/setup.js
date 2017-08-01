@@ -18,10 +18,10 @@ const goToNextRoute = (req, res, next) => {
   next();
 };
 
-const authStub = {
+const authMock = {
   authenticate: goToNextRoute,
   authorize: goToNextRoute,
   authorizeAdmin: goToNextRoute
 };
 
-mockery.registerMock('./config/authentication', authStub);
+mockery.registerMock('./config/authentication', authMock);

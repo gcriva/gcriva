@@ -20,7 +20,7 @@
   "invalid": {
     "email": "Favor digitar um email válido"
   },
-
+  "record": "Registro",
   "project": "Projeto",
   "beneficiary": "Beneficiário",
   "user": "Usuário"

@@ -5,17 +5,18 @@ const Course = require('../../models/Course');
 
 describe('courses controller', () => {
   let app;
+  const startDate = new Date().toISOString();
 
-  before(() => Course.deleteAll());
+  before(() => Course.remove({}));
 
-  afterEach(() => Course.deleteAll());
+  afterEach(() => Course.remove({}));
 
   beforeEach(() => {
     app = require('../../app.js');
   });
 
   it('/index: returns all courses ', () => (
-    new Course({ name: 'name', startDate: '2017-06-01' }).save()
+    new Course({ name: 'name', startDate }).save()
       .then(() => (
         request(app)
           .get('/courses')
@@ -24,26 +25,26 @@ describe('courses controller', () => {
       .then(res => res.body)
       .should.eventually.containSubset({
         courses: [
-          { name: 'name', startDate: '2017-06-01' }
+          { name: 'name', startDate }
         ]
       })
   ));
 
   it('/show: shows the course', () => (
-    new Course({ name: 'name', startDate: '2017-06-01' }).save()
+    new Course({ name: 'name', startDate }).save()
       .then(course => (
         request(app)
-          .get(`/courses/${course.entityKey.id}`)
+          .get(`/courses/${course._id}`)
           .expect(200)
           .then(res => res.body)
           .should.eventually.containSubset({
-            course: { name: 'name', startDate: '2017-06-01' }
+            course: { name: 'name', startDate }
           })
       ))
   ));
   it('/show: returns 404 when course was not found', () => (
       request(app)
-        .get('/courses/something')
+        .get('/courses/597fc3faaafaaaaaaaaaaaa6')
         .expect(404)
   ));
 
@@ -57,7 +58,7 @@ describe('courses controller', () => {
     });
 
     it('creates a new course', done => {
-      const course = { name: 'course!', startDate: '2017-06-01' };
+      const course = { name: 'course!', startDate };
 
       request(app)
         .post('/courses')
@@ -83,19 +84,19 @@ describe('courses controller', () => {
 
     it('returns 404 when course was not found', () => (
       request(app)
-        .put('/courses/blau')
-        .send({ course: { name: 'name', startDate: '2017-06-01' } })
+        .put('/courses/597fc3faaafaaaaaaaaaaaa6')
+        .send({ course: { name: 'name', startDate } })
         .expect(404)
     ));
 
     it('updates the course and returns the updated entity', () => {
       const course = { name: 'anotherName' };
-      const subject = new Course({ name: 'name', startDate: '2017-06-01' });
+      const subject = new Course({ name: 'name', startDate });
 
       return subject.save()
         .then(() => (
           request(app)
-          .put(`/courses/${subject.entityKey.id}`)
+          .put(`/courses/${subject._id}`)
           .send({ course })
           .expect(200)
         ))
@@ -104,7 +105,7 @@ describe('courses controller', () => {
           course: { name: 'anotherName' }
         })
         .then(() => (
-          Course.get(subject.entityKey.id).should.eventually.containSubset({
+          Course.findById(subject._id).should.eventually.containSubset({
             name: 'anotherName'
           })
         ));
@@ -114,20 +115,20 @@ describe('courses controller', () => {
   describe('/delete', () => {
     it('returns 404 if course was not found', () => (
       request(app)
-        .delete('/courses/blau')
+        .delete('/courses/597fc3faaafaaaaaaaaaaaa6')
         .expect(404)
     ));
 
     it('returns the deleted key', () => {
-      const course = new Course({ name: 'someNadsdme', startDate: '2017-06-01' });
+      const course = new Course({ name: 'someNadsdme', startDate });
 
       return course.save()
         .then(() => (
-          request(app).delete(`/courses/${course.entityKey.id}`).expect(200)
+          request(app).delete(`/courses/${course._id}`).expect(200)
         ))
         .then(res => (
           res.body.should.containSubset({
-            id: Number.parseInt(course.entityKey.id, 10)
+            id: course._id.toString()
           })
         ));
     });

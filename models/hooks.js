@@ -1,62 +1,69 @@
 'use strict';
 
-const datastore = require('../config/datastore');
-const { is } = require('ramda');
+const mongoose = require('mongoose');
+const { NotFoundError } = require('./errors');
 
-const isArray = is(Array);
+const models = {};
 
-exports.setUpdatedAt = function setUpdatedAt() {
-  this.updatedAt = new Date();
-  return Promise.resolve();
+exports.hooksPlugin = schema => {
+  schema.post('remove', auditDelete);
+  schema.post('save', auditSave);
+  schema.post('findOne', notFoundHandler);
 };
 
-exports.auditSave = function auditSave() {
-  const entity = this;
-  const entityName = `audit${entity.entityKey.kind}`;
-  const auditKey = datastore.key([entityName]);
+exports.auditSave = auditSave;
+exports.auditDelete = auditDelete;
+
+function auditSave(document) {
+  if (!document) return;
+  const Model = getAuditModel(document.collection.name);
 
   const auditData = {
-    id: entity.entityKey.id,
-    auditOperation: entity.entityKey.id ? 'update' : 'insert',
+    id: document._id,
+    auditOperation: 'save',
     auditTimestamp: Date.now(),
+    data: document.toObject()
   };
 
-  datastore.save({
-    key: auditKey,
-    data: Object.assign(auditData, entity.entityData)
-  }, auditSaveHandler(entity.entityKey));
-
-  return Promise.resolve();
-};
-
-exports.auditDelete = function auditDelete(response) {
-  if (isArray(response.key)) {
-    response.key.forEach(auditDeletedEntity);
-  } else {
-    auditDeletedEntity(response.key);
-  }
-
-  return Promise.resolve(response);
-};
-
-function auditDeletedEntity(key) {
-  const entityName = `audit${key.kind}`;
-  const auditKey = datastore.key([entityName]);
-
-  datastore.save({
-    key: auditKey,
-    data: {
-      id: key.id,
-      auditOperation: 'delete',
-      auditTimestamp: Date.now()
-    }
-  }, auditSaveHandler(key));
+  const model = new Model(auditData);
+  model.save().catch(auditSaveHandler(document.collection.name));
 }
 
-function auditSaveHandler(entityKey) {
-  return err => {
-    if (err) {
-      throw new Error(`Error saving audit for ${entityKey.kind}: ${JSON.stringify(err)}`);
-    }
+function auditDelete(document) {
+  const Model = getAuditModel(document.collection.name);
+
+  const auditData = {
+    id: document._id,
+    auditOperation: 'delete',
+    auditTimestamp: Date.now(),
+    data: document.toObject()
   };
+
+  const model = new Model(auditData);
+  model.save().catch(auditSaveHandler(document.collection.name));
+}
+
+function auditSaveHandler(modelName) {
+  return err => {
+    throw new Error(`Error saving audit for model ${modelName}: ${JSON.stringify(err)}`);
+  };
+}
+
+function notFoundHandler(res, next) {
+  if (!res) {
+    return next(new NotFoundError('Could not find the record'));
+  }
+
+  return next();
+}
+
+function getAuditModel(collectionName) {
+  const name = `audit_${collectionName}`;
+  if (!models[name]) {
+    models[name] = mongoose.model(name, new mongoose.Schema({}, {
+      strict: false, versionKey: false
+    }));
+  }
+
+  return models[name];
 }

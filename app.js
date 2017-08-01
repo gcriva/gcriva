@@ -1,7 +1,6 @@
 'use strict';
 
-// Load environment variables from .env file, where API keys and passwords are configured.
-require('dotenv').config();
+const locals = require('./config/locals');
 const configureI18n = require('./config/i18n');
 const bluebird = require('bluebird');
 
@@ -10,15 +9,18 @@ global.Promise = bluebird;
 
 const { is } = require('ramda');
 const express = require('express');
+require('express-async-errors');
 const compression = require('compression');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 const lusca = require('lusca');
-const gstore = require('gstore-node');
-const { ValidationError, ValidatorError } = require('gstore-node/lib/error');
+const { NotFoundError } = require('./models/errors');
 const passport = require('passport');
 const expressValidator = require('express-validator');
 const multer = require('multer');
+const mongoose = require('mongoose');
+const ValidatorError = require('mongoose/lib/error/validator');
+const ValidationError = require('mongoose/lib/error/validation');
 
 require('./config/cloudinary')();
 const authentication = require('./config/authentication');
@@ -34,17 +36,16 @@ const projectsController = require('./controllers/projects');
 const eventsController = require('./controllers/events');
 const coursesController = require('./controllers/courses');
 
-const datastore = require('./config/datastore');
-
 /**
  * Create Express server.
  */
 const app = express();
 
 /**
- * Connect to Datastore
+ * Connect to MongoDB
  */
-gstore.connect(datastore);
+mongoose.Promise = bluebird;
+mongoose.connect(locals.mongoUri, { useMongoClient: true });
 
 /**
  * Express configuration.
@@ -118,14 +119,15 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 });
 
 
-const isValidationError = is(ValidationError);
+const isNotFoundError = is(NotFoundError);
 const isValidatorError = is(ValidatorError);
+const isValidationError = is(ValidationError);
 
 function handleModelErrors(error, req, res, next) {
-  if (isValidationError(error) || isValidatorError(error)) {
-    res.error(422, error);
-  } else if (error.code === 404) {
-    res.error(404, error.message);
+  if (isValidatorError(error) || isValidationError(error) || error.array) {
+    res.error(422, error.array ? error.array() : error.errors);
+  } else if (isNotFoundError(error)) {
+    res.error(404, error.errorCode ? res.t(error.errorCode, res.t('record')) : error.message);
   } else if (process.env.NODE_ENV === 'development') {
     // Show the entire error for debugging purposes
     console.error(error);

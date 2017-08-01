@@ -10,49 +10,38 @@ const stream = require('stream');
 const User = require('../models/User');
 const locals = require('../config/locals');
 
-exports.index = (req, res, next) => {
-  User.list()
-    .then(response => {
-      res.json({
-        users: response.entities
-      });
-    })
-    .catch(next);
+exports.index = async (req, res) => {
+  const users = await User.find().lean().exec();
+
+  res.json({ users });
 };
 
 /**
  * POST /login
  * Sign in using email and password.
  */
-exports.postLogin = (req, res, next) => {
+exports.postLogin = async (req, res) => {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password cannot be blank').notEmpty();
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  const errors = req.validationErrors();
+  const user = await User.findOne({ email: req.body.email }).lean().exec();
+  user.comparePassword(req.body.password, (err, isMatch) => {
+    if (isMatch && !err) {
+      const token = generateUserToken(user);
 
-  if (errors) {
-    return res.error(422, errors[0]);
-  }
-
-  User.findOne({ email: req.body.email })
-    .then(user => {
-      user.comparePassword(req.body.password, (err, isMatch) => {
-        if (isMatch && !err) {
-          const token = generateUserToken(user);
-
-          res.json({ success: true, token });
-        } else {
-          res.error(422, { success: false, message: res.t('authFail') });
-        }
-      });
-    })
-    .catch(next);
+      res.json({ success: true, token });
+    } else {
+      res.error(422, { success: false, message: res.t('authFail') });
+    }
+  });
 };
 
 function generateUserToken(user) {
   const userJwtData = pick(
     ['id', 'name', 'email', 'roles', 'picture'],
-    user.plain()
+    user.toObject()
   );
   return jwt.sign(userJwtData, locals.appSecret, {
     expiresIn: '7d'
@@ -63,126 +52,93 @@ function generateUserToken(user) {
  * POST /signup
  * Create a new local account.
  */
-exports.signup = (req, res, next) => {
+exports.signup = async (req, res) => {
   req.checkBody('email', 'Email is not valid').isEmail();
   req.checkBody('password', 'Password must be at least 4 characters long').len(4);
   req.checkBody('confirmPassword', 'Passwords do not match').equals(req.body.password);
   req.sanitize('email').normalizeEmail({ remove_dots: false, gmail_remove_dots: false });
-
-  const errors = req.validationErrors();
-  if (errors) {
-    return res.error(422, errors);
-  }
+  const errors = await req.getValidationResult();
+  errors.throw();
 
   const user = new User(pick(
     ['email', 'password', 'name', 'roles'],
     req.body
   ));
+  const [existingUser] = await User.find({ email: req.body.email }).limit(1).lean();
+  if (existingUser && existingUser._id !== req.user.id) {
+    return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
+  }
+  await user.updatePassword();
+  await user.save();
+  const token = generateUserToken(user);
 
-  User.findOne({ email: req.body.email }, (err, existingUser) => {
-    if (existingUser) {
-      return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
-    }
-
-    user.updatePassword(user.password)
-      .then(() => user.save())
-      .then(() => {
-        const token = generateUserToken(user);
-
-        res.json({ success: true, message: res.t('userCreated'), token });
-      })
-      .catch(next);
-  });
+  res.json({ success: true, message: res.t('userCreated'), token });
 };
 
 /**
  * POST /account/profile
  * Update profile information.
  */
-exports.postUpdateProfile = (req, res, next) => {
+exports.postUpdateProfile = async (req, res) => {
   req.assert('user.email', res.t('invalid.email')).isEmail();
   req.sanitize('user.email').normalizeEmail({ remove_dots: false });
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
+  const userData = pick(['name', 'email'], req.body.user);
+  const [existingUser] = await User.find({ email: userData.email }).limit(1).lean();
+  if (existingUser && existingUser._id !== req.user.id) {
+    return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
   }
-  const user = pick(['name', 'email'], req.body.user);
-
-  User.findOne({ email: user.email }, (err, existingUser) => {
-    if (existingUser && existingUser.entityKey.id !== req.user.id) {
-      return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
-    }
-
-    User.update(req.user.id, user)
-      .then(updatedUser => {
-        res.json({ user: updatedUser.plain(), token: generateUserToken(updatedUser) });
-      })
-      .catch(next);
-  });
+  const user = new User(userData);
+  await user.save();
+  res.json({ user: user.toObject(), token: generateUserToken(user) });
 };
 
 /**
  * POST /account/password
  * Update current password.
  */
-exports.postUpdatePassword = (req, res, next) => {
+exports.postUpdatePassword = async (req, res) => {
   req.assert('currentPassword', 'currentPassword is required').notEmpty();
   req.assert('password', 'Password must be at least 4 characters long').len(4);
   req.assert('confirmPassword', 'Passwords do not match').equals(req.body.password);
+  const errors = await req.getValidationResult();
+  errors.throw();
 
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.error(422, errors);
-  }
-
-  User.get(req.user.id)
-    .then(user => {
-      user.comparePassword(req.body.currentPassword, (err, isMatch) => {
-        if (isMatch && !err) {
-          user.updatePassword(req.body.password)
-            .then(() => user.save())
-            .then(() => res.json({ message: res.t('passwordReset.success') }))
-            .catch(next);
-        } else {
-          res.error(422, res.t('authFail'));
-        }
-      });
-    })
-    .catch(next);
+  const user = await User.findById(req.user.id).exec();
+  user.comparePassword(req.body.currentPassword, async (err, isMatch) => {
+    if (isMatch && !err) {
+      await user.updatePassword(req.body.password);
+      await user.save();
+      res.json({ message: res.t('passwordReset.success') });
+    } else {
+      res.error(422, res.t('authFail'));
+    }
+  });
 };
 
 /**
  * POST /account/delete
  * Delete user account.
  */
-exports.delete = (req, res, next) => {
-  User.delete(req.body.id)
-    .then(response => {
-      if (!response.success) {
-        res.error(404, res.t('notFound', res.t('user')));
-      } else {
-        res.json({ id: response.key.id });
-      }
-    })
-    .catch(next);
+exports.delete = async (req, res) => {
+  const user = await User.findById(req.body.id).exec();
+  await user.remove();
+
+  res.json({ _id: user._id });
 };
 
 /**
  * POST /reset/:token
  * Process the reset password request.
  */
-exports.postReset = (req, res, next) => {
+exports.postReset = async (req, res, next) => {
   req.assert('password', 'Password must be at least 4 characters long.').len(4);
   req.assert('confirmPassword', 'Passwords must match.').equals(req.body.password);
 
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.status(422).json({ success: false, messages: errors });
-  }
+  const errors = await req.getValidationResult();
+  errors.throw();
 
   const resetPassword = () =>
     User

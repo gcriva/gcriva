@@ -1,41 +1,37 @@
 'use strict';
 
 const bcrypt = require('bcrypt-nodejs');
-const gstore = require('gstore-node');
-const { auditDelete, auditSave } = require('./hooks');
+const { hooksPlugin } = require('./hooks');
+const mongoose = require('mongoose');
+const { isEmail } = require('validator');
 
-const userSchema = new gstore.Schema({
-  email: { type: 'string', validate: 'isEmail', required: true },
-  password: { type: 'string', excludeFromIndexes: true },
-  passwordResetToken: 'string',
-  passwordResetExpires: 'datetime',
-  name: { type: 'string', required: true },
-  picture: 'string',
-  roles: { type: 'array', required: true },
+const userSchema = new mongoose.Schema({
+  email: { type: String, validate: isEmail, index: true, required: true },
+  password: { type: String },
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  name: { type: String, required: true },
+  picture: String,
+  roles: { type: Array, required: true },
 
-  google: 'string',
-  tokens: { type: 'array' },
+  google: String,
+  tokens: { type: Array },
+}, { timestamps: true });
 
-  createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
-  updatedAt: { type: 'datetime' }
-});
+userSchema.plugin(hooksPlugin);
 
 /**
  * Password hash middleware.
  */
-userSchema.pre('save', function preSave() {
+userSchema.pre('save', function preSave(next) {
   const user = this;
 
   if (user.email) {
     user.email = user.email.toLowerCase();
   }
 
-  user.updatedAt = new Date();
-
-  return Promise.resolve();
+  next();
 });
-userSchema.post('delete', auditDelete);
-userSchema.pre('save', auditSave);
 
 /**
  * Helper method for validating user's password.
@@ -65,6 +61,6 @@ userSchema.methods.updatePassword = function updatePassword(newPassword) {
   });
 };
 
-const User = gstore.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;

@@ -1,30 +1,25 @@
 'use strict';
 
-const gstore = require('gstore-node');
-const { auditDelete, auditSave, setUpdatedAt } = require('./hooks');
+const { hooksPlugin } = require('./hooks');
+const mongoose = require('mongoose');
+const { isISO8601 } = require('./validations');
 
-const beneficiarySchema = new gstore.Schema({
-  name: { type: 'string', required: true },
-  childName: 'string',
-  childNumber: 'string',
-  birthDate: { type: 'datetime', required: true },
-  grade: 'string',
-  street: 'string',
-  city: 'string',
-  state: 'string',
-  motherName: 'string',
-  fatherName: 'string',
-  guardianName: 'string',
-  phoneNumbers: 'array',
+const beneficiarySchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  childName: String,
+  childNumber: String,
+  birthDate: { type: Date, validate: isISO8601, required: true },
+  grade: String,
+  street: String,
+  city: String,
+  state: String,
+  motherName: String,
+  fatherName: String,
+  guardianName: String,
+  phoneNumbers: Array,
+}, { timestamps: true });
 
-  createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
-  updatedAt: { type: 'datetime' }
-});
-
-beneficiarySchema.pre('save', setUpdatedAt);
-beneficiarySchema.post('delete', auditDelete);
-beneficiarySchema.pre('save', auditSave);
-
-const Beneficiary = gstore.model('Beneficiary', beneficiarySchema);
+beneficiarySchema.plugin(hooksPlugin);
+const Beneficiary = mongoose.model('Beneficiary', beneficiarySchema);
 
 module.exports = Beneficiary;

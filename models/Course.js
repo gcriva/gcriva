@@ -1,24 +1,19 @@
 'use strict';
 
-const gstore = require('gstore-node');
-const { auditDelete, auditSave, setUpdatedAt } = require('./hooks');
+const { hooksPlugin } = require('./hooks');
+const mongoose = require('mongoose');
+const { isISO8601 } = require('./validations');
 
-const coursesSchema = new gstore.Schema({
-  name: { type: 'string', required: true },
-  startDate: { type: 'datetime', required: true },
-  endDate: { type: 'datetime' },
-  place: 'string',
-  description: 'string',
-  beneficiaries: 'array',
+const courseSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  startDate: { type: Date, validate: isISO8601, required: true },
+  endDate: { type: Date },
+  place: String,
+  description: String,
+  beneficiaries: Array,
+}, { timestamps: true });
 
-  createdAt: { type: 'datetime', default: gstore.defaultValues.NOW, write: false },
-  updatedAt: { type: 'datetime' }
-});
-
-coursesSchema.pre('save', setUpdatedAt);
-coursesSchema.post('delete', auditDelete);
-coursesSchema.pre('save', auditSave);
-
-const Course = gstore.model('Course', coursesSchema);
+courseSchema.plugin(hooksPlugin);
+const Course = mongoose.model('Course', courseSchema);
 
 module.exports = Course;
