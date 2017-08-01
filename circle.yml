@@ -1,25 +1,19 @@
 general:
   artifacts:
     - "coverage"
-    - "emulator.txt"
 
 machine:
   environment:
     PATH: "${PATH}:${HOME}/${CIRCLE_PROJECT_REPONAME}/node_modules/.bin"
+  services:
+   - mongodb
   node:
-    version: 6.10.2
-  post:
-    - sudo /opt/google-cloud-sdk/bin/gcloud -q components install beta
-    - sudo /opt/google-cloud-sdk/bin/gcloud config set project $GCLOUD_PROJECT
+    version: 8.2.1
 
 dependencies:
   override:
     - npm install
 
 test:
-  pre:
-    - sudo /opt/google-cloud-sdk/bin/gcloud -q beta emulators datastore start --no-legacy >> emulator.txt 2>&1:
-        background: true
-    - sleep 10 # make sure the Datastore emulator is ready
   override:
     - npm run validate
