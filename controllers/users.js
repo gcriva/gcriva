@@ -26,7 +26,7 @@ exports.postLogin = async (req, res) => {
   const errors = await req.getValidationResult();
   errors.throw();
 
-  const user = await User.findOne({ email: req.body.email }).lean().exec();
+  const user = await User.findOne({ email: req.body.email }).exec();
   user.comparePassword(req.body.password, (err, isMatch) => {
     if (isMatch && !err) {
       const token = generateUserToken(user);
