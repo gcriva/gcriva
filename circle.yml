@@ -5,8 +5,6 @@ general:
 machine:
   environment:
     PATH: "${PATH}:${HOME}/${CIRCLE_PROJECT_REPONAME}/node_modules/.bin"
-  services:
-   - mongodb
   node:
     version: 8.2.1
 
