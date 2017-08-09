@@ -293,7 +293,7 @@ exports.updatePicture = (req, res, next) => {
         .then(user => {
           const newToken = generateUserToken(user);
 
-          res.json({ picture: user.picture, token: newToken });
+          res.json({ picture: newPicture, token: newToken });
         })
         .catch(next);
     }
