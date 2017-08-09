@@ -41,7 +41,7 @@ exports.postLogin = async (req, res) => {
 function generateUserToken(user) {
   const userJwtData = pick(
     ['id', 'name', 'email', 'roles', 'picture'],
-    user.toObject()
+    user
   );
   return jwt.sign(userJwtData, locals.appSecret, {
     expiresIn: '7d'
