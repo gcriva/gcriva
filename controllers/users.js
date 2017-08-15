@@ -68,7 +68,7 @@ exports.signup = async (req, res) => {
   if (existingUser && existingUser._id !== req.user.id) {
     return res.status(422).json({ success: false, message: res.t('userAlreadyCreated') });
   }
-  await user.updatePassword();
+  await user.updatePassword(user.password);
   await user.save();
   const token = generateUserToken(user);
 
@@ -266,7 +266,7 @@ function buildEmailParts(user, token, res) {
     ' ',
     res.t('passwordReset.emailExplanation'),
     res.t('passwordReset.clickResetLink'),
-    `http://${process.env.CLIENT_URL}/#/reset-password/${token}`,
+    `${process.env.CLIENT_URL}/#/reset-password/${token}`,
     res.t('passwordReset.disregardEmail'),
     ' ',
     `${res.t('passwordReset.ending')},`,
