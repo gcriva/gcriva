@@ -23,5 +23,8 @@
   "record": "Registro",
   "project": "Projeto",
   "beneficiary": "Beneficiário",
-  "user": "Usuário"
+  "user": "Usuário",
+  "validations": {
+    "required": "Este campo é obrigatório"
+  }
 }
