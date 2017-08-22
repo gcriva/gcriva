@@ -10,5 +10,5 @@ API for the Gcriva's management. Gcriva is a nonprofit organization that support
 ## How to run the code
 
 ###
-1. Run `npm install`
-2. Run `npm start`
+1. Run `yarn install`
+2. Run `yarn start`
