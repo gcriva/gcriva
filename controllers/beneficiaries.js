@@ -10,7 +10,10 @@ exports.index = async (req, res) => {
 };
 
 exports.show = async (req, res) => {
-  const beneficiary = await Beneficiary.findById(req.params.id).lean().exec();
+  const beneficiary = await Beneficiary.findById(req.params.id)
+    .populate('workshops')
+    .lean()
+    .exec();
 
   res.json({ beneficiary });
 };
@@ -22,7 +25,7 @@ exports.create = async (req, res) => {
 
   const beneficiary = new Beneficiary(req.body.beneficiary);
   await beneficiary.save();
-  res.json({ course: beneficiary.toObject() });
+  res.json({ beneficiary: beneficiary.toObject() });
 };
 
 exports.update = async (req, res) => {

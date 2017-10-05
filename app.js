@@ -34,7 +34,7 @@ const usersController = require('./controllers/users');
 const beneficiariesController = require('./controllers/beneficiaries');
 const projectsController = require('./controllers/projects');
 const eventsController = require('./controllers/events');
-const coursesController = require('./controllers/courses');
+const workshopsController = require('./controllers/workshops');
 
 /**
  * Create Express server.
@@ -104,11 +104,11 @@ app.get('/events/:id', eventsController.show);
 app.post('/events', eventsController.create);
 app.put('/events/:id', eventsController.update);
 app.delete('/events/:id', eventsController.delete);
-app.get('/courses', coursesController.index);
-app.get('/courses/:id', coursesController.show);
-app.post('/courses', coursesController.create);
-app.put('/courses/:id', coursesController.update);
-app.delete('/courses/:id', coursesController.delete);
+app.get('/workshops', workshopsController.index);
+app.get('/workshops/:id', workshopsController.show);
+app.post('/workshops', workshopsController.create);
+app.put('/workshops/:id', workshopsController.update);
+app.delete('/workshops/:id', workshopsController.delete);
 
 /**
  * OAuth authentication routes. (Sign in)
