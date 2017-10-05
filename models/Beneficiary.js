@@ -2,13 +2,15 @@
 
 const { hooksPlugin } = require('./hooks');
 const mongoose = require('mongoose');
+const { merge } = require('ramda');
 const { isISO8601 } = require('./validations');
+
+const dateType = { type: Date, validate: isISO8601 };
 
 const beneficiarySchema = new mongoose.Schema({
   name: { type: String, required: true },
-  childName: String,
   childNumber: String,
-  birthDate: { type: Date, validate: isISO8601, required: true },
+  birthDate: merge(dateType, { required: true }),
   grade: String,
   street: String,
   city: String,
@@ -17,6 +19,13 @@ const beneficiarySchema = new mongoose.Schema({
   fatherName: String,
   guardianName: String,
   phoneNumbers: Array,
+  sponsorName: String,
+  sponsorNationality: String,
+  welcomeDate: dateType,
+  exitDate: dateType,
+  exitReason: String,
+  workshops: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workshop' }],
+  gender: String,
 }, { timestamps: true });
 
 beneficiarySchema.plugin(hooksPlugin);
