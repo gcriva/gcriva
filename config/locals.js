@@ -13,11 +13,12 @@ const {
   MONGO_PORT,
   MONGO_USER,
   MONGO_PASSWORD,
+  MONGO_DATABASE_NAME,
   MONGO_OPTIONS,
   APP_SECRET,
   NODE_ENV
 } = process.env;
-const databaseName = `gcriva_${NODE_ENV}`;
+const databaseName = MONGO_DATABASE_NAME || `gcriva_${NODE_ENV}`;
 const mongoOptions = MONGO_OPTIONS ? `?${MONGO_OPTIONS}` : '';
 const mongoPort = MONGO_PORT || 27017;
 const auth = MONGO_USER && MONGO_PASSWORD ? `${MONGO_USER}:${MONGO_PASSWORD}@` : '';
