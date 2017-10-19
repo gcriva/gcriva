@@ -221,6 +221,10 @@ exports.postForgot = (req, res, next) => {
       .findOne({ email: req.body.email })
       .catch(next)
       .then(user => {
+        if (!user) {
+          return res.error(422, res.t('notFound', req.body.email));
+        }
+
         user.passwordResetToken = token;
         user.passwordResetExpires = Date.now() + 3600000; // 1 hour
 
