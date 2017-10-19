@@ -222,7 +222,7 @@ exports.postForgot = (req, res, next) => {
       .catch(next)
       .then(user => {
         if (!user) {
-          return res.error(422, res.t('notFound'));
+          return res.error(422, res.t('notFound', req.body.email));
         }
 
         user.passwordResetToken = token;
