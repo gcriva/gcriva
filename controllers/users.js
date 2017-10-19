@@ -222,8 +222,7 @@ exports.postForgot = (req, res, next) => {
       .catch(next)
       .then(user => {
         if (!user) {
-          res.error(422, res.t('notFound'));
-          throw new Error(`O email informado não foi encontrado em nenhum cadastro. email: ${req.body.email}`);
+          return res.error(422, res.t('notFound'));
         }
 
         user.passwordResetToken = token;
